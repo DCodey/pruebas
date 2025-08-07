@@ -16,16 +16,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768); // md breakpoint
-      if (window.innerWidth >= 768) {
-        setSidebarOpen(true);
-      } else {
-        setSidebarOpen(false);
-      }
+      const isMobileView = window.innerWidth < 768; // md breakpoint
+      setIsMobile(isMobileView);
+
+      // En móvil, el sidebar empieza cerrado; en desktop, empieza abierto
+      setSidebarOpen(!isMobileView);
     };
 
+    // Configuración inicial
     handleResize();
+
+    // Manejar cambios de tamaño de pantalla
     window.addEventListener('resize', handleResize);
+
+    // Limpiar el event listener al desmontar
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -43,34 +47,38 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-secondary-50">
+      {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
         onToggle={toggleSidebar}
         onLogout={handleLogout}
       />
 
+      {/* Contenido principal */}
+      <div className="md:pl-72 md:pt-3 pr-2">
 
-      <div className="p-4 md:ml-64">
-        <div className="md:hidden bg-white shadow-sm">
+        {/* Barra superior en móvil */}
+        <div className="md:hidden bg-white shadow-sm sticky top-0 z-20">
           <div className="flex items-center justify-between px-4 py-3">
             <button
               type="button"
               className="text-gray-500 hover:text-gray-600 focus:outline-none"
               onClick={toggleSidebar}
+              aria-label="Abrir menú"
             >
               <MenuIcon className="h-6 w-6" />
-              <span className="sr-only">Abrir menú</span>
             </button>
-            <h1 className="text-lg font-semibold text-gray-800">AminFlowers</h1>
-            <div className="w-6"></div> {/* For balance */}
           </div>
         </div>
-        <div className=' border-gray-50 border-dashed rounded-lg dark:border-gray-700'>
-          {children}
-        </div>
+
+        {/* Contenido */}
+        <main id="main-content" className="bg-white md:rounded-2xl w-full h-screen bg-white p-4 shadow-sm">
+          <div className=" ">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
-
   );
 }
