@@ -9,9 +9,9 @@ interface PageLayoutProps {
 
 export default function PageLayout({ title, description, headerAction, children }: PageLayoutProps) {
   return (
-    <div className="py-6">
+    <div className="py-4">
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-1 sm:px-6 md:px-8 ">
+      <div className="mx-auto px-1 sm:px-6 md:px-8 ">
         <div className="sm:flex sm:items-center">
           <div className="sm:flex-auto">
             <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
@@ -26,7 +26,7 @@ export default function PageLayout({ title, description, headerAction, children 
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-1 sm:px-6 md:px-8 mt-2">
+      <div className="mx-auto px-1 sm:px-6 md:px-8 mt-2">
         {children}
       </div>
     </div>
