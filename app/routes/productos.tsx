@@ -154,8 +154,8 @@ function ProductosContent() {
                 header: 'Stock',
                 className: 'text-gray-500',
                 render: (product) => (
-                  <span className={`px-2 py-1 text-xs rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {product.stock} unidades
+                  <span className={`px-2 py-1 text-xs rounded-full ${product.stock !== null && product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {product.stock !== null ? product.stock + ' unidades' : 'Ilimitado'}
                   </span>
                 )
               },

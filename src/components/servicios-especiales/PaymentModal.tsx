@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
+import Checkbox from '../ui/Checkbox';
 import { updateSpecialService, getSpecialService } from '../../services/specialService';
 import Loader from '../ui/Loader';
-import { addWeeks, addMonths, addYears, format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
+import { addWeeks, addMonths, addYears, format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore, isAfter, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface Thursday {
@@ -163,27 +164,30 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   // Handle Thursday selection
-  const handleThursdaySelect = (selectedDate: Date) => {
+  const handleThursdaySelect = (selectedDate: Date, isSelected: boolean) => {
     // Check if the selected date is before the service start date
     if (serviceStartDate) {
       const startDate = new Date(serviceStartDate);
       startDate.setHours(0, 0, 0, 0);
-      if (selectedDate < startDate) {
+      if (isBefore(selectedDate, startDate)) {
         setError('No puedes seleccionar una fecha anterior al inicio del servicio');
         return;
       }
     }
-    
-    setPaymentDate(selectedDate.toISOString().split('T')[0]);
-    setError(null);
-    
-    // Update Thursdays with new selection
-    setThursdays(prev => 
-      prev.map(thursday => ({
-        ...thursday,
-        isSelected: isSameDay(thursday.date, selectedDate)
-      }))
-    );
+
+    // For single selection mode
+    if (isSelected) {
+      setPaymentDate(selectedDate.toISOString().split('T')[0]);
+      setError(null);
+      
+      // Update Thursdays with new selection
+      setThursdays(prev => 
+        prev.map(thursday => ({
+          ...thursday,
+          isSelected: isSameDay(thursday.date, selectedDate) ? isSelected : false
+        }))
+      );
+    }
   };
 
   // Handle date input change
@@ -288,26 +292,33 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {thursdays.map((thursday) => (
-                    <button
-                      key={thursday.formatted}
-                      type="button"
-                      onClick={() => !thursday.isDisabled && handleThursdaySelect(thursday.date)}
-                      disabled={thursday.isDisabled}
-                      className={`py-2 px-3 rounded-md text-sm text-center ${
-                        thursday.isSelected
-                          ? 'bg-blue-600 text-white'
-                          : thursday.isDisabled
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      title={thursday.isDisabled ? 'Esta fecha no está disponible' : ''}
-                    >
-                      {thursday.formatted}
-                      {thursday.isPast && !thursday.isDisabled && ' (pasado)'}
-                    </button>
-                  ))}
+                <div className="space-y-2 max-h-60 overflow-y-auto p-1">
+                  {thursdays.map((thursday) => {
+                    const isDisabled = thursday.isDisabled || (serviceStartDate && isBefore(thursday.date, new Date(serviceStartDate)));
+                    const isPast = isBefore(thursday.date, new Date());
+                    
+                    return (
+                      <div 
+                        key={thursday.formatted} 
+                        className={`flex items-center p-2 rounded-md ${isDisabled ? 'opacity-60' : 'hover:bg-gray-50'}`}
+                      >
+                        <Checkbox
+                          id={`thursday-${thursday.formatted}`}
+                          checked={thursday.isSelected}
+                          onChange={(e) => handleThursdaySelect(thursday.date, e.target.checked)}
+                          disabled={isDisabled}
+                          label={
+                            <span className={`text-sm ${isPast ? 'text-gray-500' : 'text-gray-800'}`}>
+                              {thursday.formatted}
+                              {isPast && !isDisabled && ' (pasado)'}
+                            </span>
+                          }
+                          containerClassName="w-full"
+                          labelClassName={`ml-2 ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
                 {serviceStartDate && (
                   <p className="text-xs text-gray-500 mt-2">
