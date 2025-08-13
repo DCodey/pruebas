@@ -69,6 +69,26 @@ function ClientesContent() {
       }
     }
   };
+  const modalFooter = (
+    <div className="flex justify-end gap-x-3">
+      <button
+        type="button"
+        onClick={handleCloseModal}
+        className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        disabled={isLoading}
+      >
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        form="client-form"
+        className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-70 flex items-center"
+        disabled={isLoading}
+      >
+        Guardar
+      </button>
+    </div>
+  );
 
   return (
     <>
@@ -103,6 +123,11 @@ function ClientesContent() {
               {
                 key: 'celular',
                 header: 'Celular',
+                className: 'text-gray-500'
+              },
+              {
+                key: 'numeroDocumento',
+                header: 'Número de Documento',
                 className: 'text-gray-500'
               },
               {
@@ -142,7 +167,8 @@ function ClientesContent() {
         </TableContainer>
       </PageLayout>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={currentClient ? 'Editar Cliente' : 'Registrar Cliente'}>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={currentClient ? 'Editar Cliente' : 'Registrar Cliente'}
+        footer={modalFooter}>
         <ClientForm 
           client={currentClient}
           onSubmit={handleSaveClient}

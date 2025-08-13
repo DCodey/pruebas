@@ -4,18 +4,28 @@ import Input from '../ui/Input';
 
 interface ClientFormProps {
   client: Client | null;
-  onSubmit: (formData: { nombre: string; descripcion: string; celular:number }) => void;
+  onSubmit: (formData: { 
+    nombre: string; 
+    descripcion: string; 
+    celular: number; 
+    numeroDocumento?: string;
+  }) => void;
   onClose: () => void;
 }
 
 export default function ClientForm({ client, onSubmit, onClose }: ClientFormProps) {
-  const [formData, setFormData] = useState({ nombre: '', descripcion: '', celular: 0 });
+  const [formData, setFormData] = useState({ 
+    nombre: '', 
+    descripcion: '', 
+    celular: 0, 
+    numeroDocumento: '' 
+  });
 
   useEffect(() => {
     if (client) {
-      setFormData({ nombre: client.nombre, descripcion: client.descripcion, celular: Number(client.celular) });
+      setFormData({ nombre: client.nombre, descripcion: client.descripcion, celular: Number(client.celular), numeroDocumento: client.numeroDocumento || '' });
     } else {
-      setFormData({ nombre: '', descripcion: '', celular: 0 });
+      setFormData({ nombre: '', descripcion: '', celular: 0, numeroDocumento: '' });
     }
   }, [client]);
 
@@ -30,12 +40,12 @@ export default function ClientForm({ client, onSubmit, onClose }: ClientFormProp
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form id="client-form" onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-6 pt-4">
           <Input
             id="nombre"
             name="nombre"
-            label="Nombre del Cliente"
+            label="Nombre del Cliente *"
             value={formData.nombre}
             onChange={handleChange}
             required
@@ -46,7 +56,14 @@ export default function ClientForm({ client, onSubmit, onClose }: ClientFormProp
             label="Celular"
             value={formData.celular}
             onChange={handleChange}
-            required
+          />
+          <Input
+            id="numeroDocumento"
+            name="numeroDocumento"
+            label="Número de Documento"
+            placeholder="DNI o RUC"
+            value={formData.numeroDocumento}
+            onChange={handleChange}
           />
           <Input
             as="textarea"
@@ -56,13 +73,8 @@ export default function ClientForm({ client, onSubmit, onClose }: ClientFormProp
             value={formData.descripcion}
             onChange={handleChange}
             rows={4}
-            required
           />
         </div>
-      <div className="mt-8 flex justify-end gap-x-4">
-        <button type="button" onClick={onClose} className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Cancelar</button>
-        <button type="submit" className="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">Guardar</button>
-      </div>
     </form>
   );
 }
