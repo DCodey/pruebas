@@ -4,18 +4,18 @@ import Input from '../ui/Input';
 
 interface ClientFormProps {
   client: Client | null;
-  onSubmit: (formData: { nombre: string; descripcion: string; }) => void;
+  onSubmit: (formData: { nombre: string; descripcion: string; celular:number }) => void;
   onClose: () => void;
 }
 
 export default function ClientForm({ client, onSubmit, onClose }: ClientFormProps) {
-  const [formData, setFormData] = useState({ nombre: '', descripcion: '' });
+  const [formData, setFormData] = useState({ nombre: '', descripcion: '', celular: 0 });
 
   useEffect(() => {
     if (client) {
-      setFormData({ nombre: client.nombre, descripcion: client.descripcion });
+      setFormData({ nombre: client.nombre, descripcion: client.descripcion, celular: Number(client.celular) });
     } else {
-      setFormData({ nombre: '', descripcion: '' });
+      setFormData({ nombre: '', descripcion: '', celular: 0 });
     }
   }, [client]);
 
@@ -37,6 +37,14 @@ export default function ClientForm({ client, onSubmit, onClose }: ClientFormProp
             name="nombre"
             label="Nombre del Cliente"
             value={formData.nombre}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            id="celular"
+            name="celular"
+            label="Celular"
+            value={formData.celular}
             onChange={handleChange}
             required
           />

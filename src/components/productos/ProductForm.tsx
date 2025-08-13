@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Product } from '../../services/productService';
 import Input from '../ui/Input';
 
@@ -6,107 +6,213 @@ interface ProductFormProps {
   product: Omit<Product, 'id'> | Product | null;
   onSubmit: (formData: Omit<Product, 'id'>) => void;
   onClose: () => void;
+  isSubmitting?: boolean;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose }) => {
-  const [formData, setFormData] = useState({
+interface FormData {
+  nombre: string;
+  descripcion: string;
+  precioCosto: number;
+  precioVenta: number;
+  stock: number | null;
+  hasUnlimitedStock: boolean;
+}
+
+interface FormErrors {
+  nombre?: string;
+  descripcion?: string;
+  precioCosto?: string;
+  precioVenta?: string;
+  stock?: string;
+}
+
+const MAX_DESCRIPTION_LENGTH = 500;
+
+const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, isSubmitting = false }) => {
+  const [formData, setFormData] = useState<FormData>({
     nombre: '',
     descripcion: '',
     precioCosto: 0,
     precioVenta: 0,
     stock: 0,
+    hasUnlimitedStock: false,
   });
+  
+  const [errors, setErrors] = useState<FormErrors>({});
 
+  // Initialize form data when product changes
   useEffect(() => {
     if (product) {
-      setFormData({
+      const hasUnlimitedStock = product.stock === null;
+      setFormData(prev => ({
+        ...prev,
         nombre: product.nombre,
         descripcion: product.descripcion,
         precioCosto: product.precioCosto,
         precioVenta: product.precioVenta,
-        stock: product.stock,
-      });
-    } else {
-      // Reset form for new product
-      setFormData({
-        nombre: '',
-        descripcion: '',
-        precioCosto: 0,
-        precioVenta: 0,
-        stock: 0,
-      });
+        stock: hasUnlimitedStock ? 0 : product.stock,
+        hasUnlimitedStock,
+      }));
     }
   }, [product]);
 
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre del producto es requerido';
+    }
+    
+    if (formData.precioCosto <= 0) {
+      newErrors.precioCosto = 'El precio de costo debe ser mayor a 0';
+    }
+    
+    if (formData.precioVenta <= 0) {
+      newErrors.precioVenta = 'El precio de venta debe ser mayor a 0';
+    } else if (formData.precioVenta < formData.precioCosto) {
+      newErrors.precioVenta = 'El precio de venta no puede ser menor al costo';
+    }
+    
+    if (formData.stock < 0) {
+      newErrors.stock = 'El stock no puede ser negativo';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
+      onSubmit(formData);
+    }
+  };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    
+    if (name === 'hasUnlimitedStock') {
+      const isChecked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({
+        ...prev,
+        hasUnlimitedStock: isChecked,
+        stock: isChecked ? null : (prev.stock || 0),
+      }));
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) || 0 : value,
+      [name]: name.includes('precio') || name === 'stock' 
+        ? parseFloat(value) || 0 
+        : value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="space-y-6 pt-4">
-        <Input
-          id="nombre"
-          name="nombre"
-          label="Nombre del Producto"
-          value={formData.nombre}
-          onChange={handleChange}
-          required
-        />
-        <Input
-          as="textarea"
-          id="descripcion"
-          name="descripcion"
-          label="Descripción"
-          value={formData.descripcion}
-          onChange={handleChange}
-          rows={3}
-          required
-        />
-        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+    <form id="product-form" onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-6">
+        {/* Product Name */}
+        <div>
           <Input
-            type="number"
-            id="precioCosto"
-            name="precioCosto"
-            label="Precio de Costo"
-            value={formData.precioCosto.toString()}
+            id="nombre"
+            name="nombre"
+            label="Nombre del Producto"
+            value={formData.nombre}
             onChange={handleChange}
-            step="0.01"
-            required
-          />
-          <Input
-            type="number"
-            id="precioVenta"
-            name="precioVenta"
-            label="Precio de Venta"
-            value={formData.precioVenta.toString()}
-            onChange={handleChange}
-            step="0.01"
+            placeholder="Ej: Ramo de Rosas Rojas"
+            error={errors.nombre}
             required
           />
         </div>
-        <Input
-          type="number"
-          id="stock"
-          name="stock"
-          label="Stock Disponible"
-          value={formData.stock.toString()}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <div className="mt-8 flex justify-end gap-x-4 fixed bottom-0 left-0 right-0">
-        <button type="button" onClick={onClose} className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Cancelar</button>
-        <button type="submit" className="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">Guardar</button>
+
+        {/* Description */}
+        <div>
+          <div className="flex justify-between">
+            <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
+              Descripción
+            </label>
+            <span className="text-xs text-gray-500">
+              {formData.descripcion.length}/{MAX_DESCRIPTION_LENGTH}
+            </span>
+          </div>
+          <textarea
+            id="descripcion"
+            name="descripcion"
+            rows={3}
+            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
+            value={formData.descripcion}
+            onChange={handleChange}
+            placeholder="Describe el producto en detalle..."
+            maxLength={MAX_DESCRIPTION_LENGTH}
+          />
+          {errors.descripcion && (
+            <p className="mt-2 text-sm text-red-600">{errors.descripcion}</p>
+          )}
+        </div>
+
+        {/* Price and Stock */}
+        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-3">
+          <div>
+            <Input
+              type="number"
+              id="precioCosto"
+              name="precioCosto"
+              label="Precio de Costo"
+              value={formData.precioCosto || ''}
+              onChange={handleChange}
+              placeholder="0.00"
+              step="0.01"
+              error={errors.precioCosto}
+              required
+            />
+          </div>
+          <div>
+            <Input
+              type="number"
+              id="precioVenta"
+              name="precioVenta"
+              label="Precio de Venta"
+              value={formData.precioVenta || ''}
+              onChange={handleChange}
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              error={errors.precioVenta}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="hasUnlimitedStock"
+                name="hasUnlimitedStock"
+                checked={formData.hasUnlimitedStock}
+                onChange={handleChange}
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              />
+              <label htmlFor="hasUnlimitedStock" className="ml-2 block text-sm text-gray-700">
+                Stock Ilimitado (no se agota)
+              </label>
+            </div>
+            {!formData.hasUnlimitedStock && (
+              <Input
+                type="number"
+                id="stock"
+                name="stock"
+                label="Stock Inicial"
+                value={formData.stock || ''}
+                onChange={handleChange}
+                min="0"
+                step="1"
+                error={errors.stock}
+                required
+              />
+            )}
+          </div>
+        </div>
       </div>
     </form>
   );

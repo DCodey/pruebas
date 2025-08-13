@@ -6,6 +6,7 @@ import { getProducts, addProduct, updateProduct, deleteProduct, type Product } f
 import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import ProductForm from '../../src/components/productos/ProductForm';
+import { Table, TableContainer } from '../../src/components/ui/Table';
 
 function ProductosContent() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -69,72 +70,148 @@ function ProductosContent() {
     }
   };
 
-  return (
-    <>
-      <PageLayout
-        title="Productos"
-        description="Una lista de todos los productos y su información relevante."
-        headerAction={(
-          <button
-            type="button"
-            onClick={() => handleOpenModal(null)}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
-          >
-            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-            Registrar Producto
-          </button>
-        )}
+  const modalFooter = (
+    <div className="flex justify-end gap-x-3">
+      <button
+        type="button"
+        onClick={handleCloseModal}
+        className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        disabled={isLoading}
       >
-        {isLoading && <Loader />}
-        <div className="flex flex-col">
-          <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-              <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Costo</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                      <th scope="col" className="relative px-6 py-3">
-                        <span className="sr-only">Acciones</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {products.map((product) => (
-                      <tr key={product.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.nombre}</td>
-                        <td className="px-6 py-4 max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-500">
-                          {product.descripcion}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.precioCosto.toFixed(2)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.precioVenta.toFixed(2)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.stock}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          <button onClick={() => handleOpenModal(product)} className="text-primary-600 hover:text-primary-900"><PencilIcon className="h-5 w-5"/></button>
-                          <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-900"><TrashIcon className="h-5 w-5"/></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </PageLayout>
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        form="product-form"
+        className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-70 flex items-center"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Procesando...
+          </>
+        ) : currentProduct ? (
+          'Actualizar Producto'
+        ) : (
+          'Guardar Producto'
+        )}
+      </button>
+    </div>
+  );
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={currentProduct ? 'Editar Producto' : 'Registrar Producto'}>
+  return (
+    <PageLayout 
+      title="Productos" 
+      description="Administra los productos de tu inventario"
+      headerAction={
+        <button
+          type="button"
+          onClick={() => handleOpenModal()}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        >
+          <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+          Nuevo Producto
+        </button>
+      }
+    >
+      <div className="relative">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
+            <Loader />
+          </div>
+        )}
+        <TableContainer>
+          <Table
+            columns={[
+              {
+                key: 'nombre',
+                header: 'Nombre',
+                className: 'font-medium text-gray-900'
+              },
+              {
+                key: 'descripcion',
+                header: 'Descripción',
+                className: 'text-gray-500 max-w-[200px] overflow-hidden text-ellipsis'
+              },
+              {
+                key: 'precioCosto',
+                header: 'Precio Costo',
+                className: 'text-gray-500',
+                render: (product) => `${product.precioCosto?.toFixed(2) || '0.00'}`
+              },
+              {
+                key: 'precioVenta',
+                header: 'Precio Venta',
+                className: 'text-gray-500',
+                render: (product) => `${product.precioVenta?.toFixed(2) || '0.00'}`
+              },
+              {
+                key: 'stock',
+                header: 'Stock',
+                className: 'text-gray-500',
+                render: (product) => (
+                  <span className={`px-2 py-1 text-xs rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {product.stock} unidades
+                  </span>
+                )
+              },
+              {
+                key: 'actions',
+                header: 'Acciones',
+                className: 'text-right',
+                render: (product) => (
+                  <div className="space-x-2">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenModal(product);
+                      }} 
+                      className="text-primary-600 hover:text-primary-900"
+                      title="Editar"
+                    >
+                      <PencilIcon className="h-5 w-5"/>
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(product.id);
+                      }} 
+                      className="text-red-600 hover:text-red-900"
+                      title="Eliminar"
+                    >
+                      <TrashIcon className="h-5 w-5"/>
+                    </button>
+                  </div>
+                )
+              }
+            ]}
+            data={products}
+            keyExtractor={(product) => product.id}
+            onRowClick={handleOpenModal}
+            emptyMessage="No hay productos registrados"
+            rowClassName="hover:bg-gray-50 cursor-pointer"
+          />
+        </TableContainer>
+      </div>
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={handleCloseModal} 
+        title={currentProduct ? 'Editar Producto' : 'Nuevo Producto'}
+        footer={modalFooter}
+      >
         <ProductForm 
-          product={currentProduct}
-          onSubmit={handleSaveProduct}
+          product={currentProduct} 
+          onSubmit={handleSaveProduct} 
           onClose={handleCloseModal}
+          isSubmitting={isLoading}
         />
       </Modal>
-    </>
+    </PageLayout>
   );
 }
 

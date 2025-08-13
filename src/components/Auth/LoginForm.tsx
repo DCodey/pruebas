@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../ui/Button';
+import { ROUTES } from '../../routes/paths';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ export function LoginForm() {
       } else {
         await signup(email, password);
       }
-      navigate('/clientes', { replace: true }); 
+      navigate(ROUTES.RESUMEN, { replace: true }); 
     } catch (err) {
       setError('Error al ' + (isLogin ? 'iniciar sesión' : 'crear cuenta'));
       console.error(err);
