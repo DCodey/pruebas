@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { SpecialService } from '../../services/specialService';
 import { getClients, type Client } from '../../services/clientService';
+import Checkbox from '../ui/Checkbox';
 
 interface SpecialServiceFormProps {
   initialData?: Partial<SpecialService>;
@@ -206,17 +207,15 @@ export default function SpecialServiceForm({
         </div>
         <div className="flex items-end">
           <div className="flex items-center h-10">
-            <input
+            <Checkbox
               id="isActive"
               name="isActive"
-              type="checkbox"
               checked={formData.isActive}
               onChange={handleInputChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              label="Servicio Activo"
+              labelClassName="text-sm text-gray-700"
+              containerClassName="flex items-center"
             />
-            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-              Servicio Activo
-            </label>
           </div>
         </div>
       </div>
