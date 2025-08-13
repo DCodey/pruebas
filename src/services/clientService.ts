@@ -7,6 +7,7 @@ export interface Client {
   nombre: string;
   descripcion: string;
   celular: number;
+  numeroDocumento?: string;
 }
 
 // Referencia a la colección 'clientes' en Firestore
@@ -20,6 +21,7 @@ const fromFirestore = (snapshot: QueryDocumentSnapshot<DocumentData>): Client =>
     nombre: data.nombre,
     descripcion: data.descripcion,
     celular: data.celular,
+    numeroDocumento: data.numeroDocumento || '',
   };
 };
 
