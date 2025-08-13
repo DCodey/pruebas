@@ -17,7 +17,7 @@ export interface Product {
   descripcion: string;
   precioCosto: number;
   precioVenta: number;
-  stock: number;
+  stock: number | null; // null means unlimited stock
 }
 
 // Mapeo de un documento de Firestore a un objeto Product
@@ -29,7 +29,7 @@ const fromFirestore = (snapshot: QueryDocumentSnapshot<DocumentData>): Product =
     descripcion: data.descripcion,
     precioCosto: data.precioCosto,
     precioVenta: data.precioVenta,
-    stock: data.stock,
+    stock: data.stock === null ? null : Number(data.stock), // Ensure proper number conversion
   };
 };
 

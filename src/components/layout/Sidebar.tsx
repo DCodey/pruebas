@@ -1,12 +1,14 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeftStartOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ROUTES } from '../../routes/paths';
 
 
 const navigation = [
-    { name: 'Resumen ', href: '/resumen', icon: '📊' },
-    { name: 'Ventas', href: '/ventas', icon: '💵' },
-    { name: 'Clientes', href: '/clientes', icon: '👥' },
-    { name: 'Productos', href: '/productos', icon: '📦' },
+    { name: 'Resumen ', href: ROUTES.RESUMEN, icon: '📊' },
+    { name: 'Ventas', href: ROUTES.VENTAS, icon: '💵' },
+    { name: 'Clientes', href: ROUTES.CLIENTES, icon: '👥' },
+    { name: 'Productos', href: ROUTES.PRODUCTOS, icon: '📦' },
+    { name: 'Servicios Especiales', href: ROUTES.SERVICIOS_ESPECIALES, icon: '🛠️' },
 ];
 
 interface SidebarProps {
@@ -38,10 +40,10 @@ export function Sidebar({ isOpen, onToggle, onLogout }: SidebarProps) {
             {/* Sidebar */}
             <div id='sidebar' className={`fixed z-30 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
                 } md:flex md:w-72 h-screen`}>
-                <div className="flex-1 flex flex-col min-h-0 border-2 border-gray-100 md:m-2 bg-secondary-50 shadow-lg md:rounded-2xl h-screen">
+                <div className="flex-1 flex flex-col border-2 border-gray-100 md:m-2 bg-secondary-50 shadow-lg md:rounded-2xl h-screen">
                     {/* Header del Sidebar con botón de cerrar en móvil */}
                     <div className="flex items-center justify-between border-b px-4 py-3">
-                        <h1 className="text-primary-800 text-xl font-bold">Florería La Fontana</h1>
+                        <h1 className="text-primary-800 text-xl font-bold">🌸Florería La Fontana</h1>
                         <button
                             onClick={onToggle}
                             className="md:hidden text-gray-500 hover:text-gray-700 pl-2 rounded-full bg-secondary-50"
@@ -71,7 +73,7 @@ export function Sidebar({ isOpen, onToggle, onLogout }: SidebarProps) {
                     </div>
 
                     {/* Pie del Sidebar */}
-                    <div className="flex p-2">
+                    <div className="flex p-2 pb-14 md:pb-4">
                         <div className="w-full">
                             <button
                                 onClick={onLogout}

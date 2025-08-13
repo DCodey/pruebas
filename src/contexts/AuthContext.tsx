@@ -1,16 +1,16 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
   onAuthStateChanged
 } from 'firebase/auth';
 import type { User, UserCredential } from 'firebase/auth';
-import { auth, initAuth } from '../firebase/config';
+import { auth } from '../firebase/config';
+import Loader from 'src/components/ui/Loader';
 
 interface AuthContextType {
   currentUser: User | null;
-  loading: boolean | false;
   signup: (email: string, password: string) => Promise<UserCredential>;
   login: (email: string, password: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
@@ -30,15 +30,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  function signup(email: string, password: string) {
-    return createUserWithEmailAndPassword(auth, email, password);
-  }
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  function login(email: string, password: string) {
-    return signInWithEmailAndPassword(auth, email, password);
-  }
 
-  async function logout() {
+  const signup = (email: string, password: string) =>
+    createUserWithEmailAndPassword(auth, email, password);
+
+  const login = (email: string, password: string) =>
+    signInWithEmailAndPassword(auth, email, password);
+
+  const logout = async () => {
     try {
       await signOut(auth);
       setCurrentUser(null);
@@ -46,26 +53,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error al cerrar sesión:', error);
       throw error;
     }
-  }
-
-  useEffect(() => {
-    initAuth().then(() => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setCurrentUser(user);
-        setLoading(false);
-      });
-      return () => unsubscribe();
-    }); 
-
-  }, []);
-
-  const value = {
+  };
+  const value: AuthContextType = {
     currentUser,
-    loading,
     signup,
     login,
-    logout,
+    logout
   };
+
+  if (loading) {
+    return <Loader />
+  }
 
   return (
     <AuthContext.Provider value={value}>

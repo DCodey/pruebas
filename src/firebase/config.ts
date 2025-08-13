@@ -26,13 +26,24 @@ const auth = getAuth(app);
 //   .catch((error) => {
 //     console.error('Error al configurar la persistencia de autenticación:', error);
 //   });
+let persistenceSet = false;
 
 export async function initAuth() {
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-  } catch (error) {
-    console.error('Error al configurar la persistencia de autenticación:', error);
+  if (!persistenceSet) {
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      persistenceSet = true;
+    } catch (error) {
+      console.error('Error al configurar la persistencia de autenticación:', error);
+    }
   }
 }
+// export async function initAuth() {
+//   try {
+//     await setPersistence(auth, browserLocalPersistence);
+//   } catch (error) {
+//     console.error('Error al configurar la persistencia de autenticación:', error);
+//   }
+// }
 
 export { auth };

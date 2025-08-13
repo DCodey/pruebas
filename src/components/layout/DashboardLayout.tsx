@@ -10,28 +10,8 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleResize = () => {
-      const isMobileView = window.innerWidth < 768; // md breakpoint
-      setIsMobile(isMobileView);
-
-      // En móvil, el sidebar empieza cerrado; en desktop, empieza abierto
-      setSidebarOpen(!isMobileView);
-    };
-
-    // Configuración inicial
-    handleResize();
-
-    // Manejar cambios de tamaño de pantalla
-    window.addEventListener('resize', handleResize);
-
-    // Limpiar el event listener al desmontar
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -47,7 +27,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="bg-secondary-50">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -56,7 +36,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       />
 
       {/* Contenido principal */}
-      <div className="md:pl-72 md:pt-3 pr-2">
+      <div className="md:pl-72 pr-2 md:[padding-top:10px]">
 
         {/* Barra superior en móvil */}
         <div className="md:hidden bg-white shadow-sm sticky top-0 z-20">
@@ -73,7 +53,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Contenido */}
-        <main id="main-content" className="bg-white md:rounded-2xl w-full h-screen bg-white p-4 shadow-sm">
+        <main id="main-content" className="md:rounded-2xl w-full bg-white p-3 md:p-0 h-screen h-[calc(100dvh-10px)] shadow-sm">
           <div className=" ">
             {children}
           </div>

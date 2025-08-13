@@ -32,14 +32,18 @@ export interface Sale {
   items: SaleItem[];
   total: number;
   fecha: Timestamp;
+  paymentMethod: PaymentMethod;
 }
 
 // Datos necesarios para crear una nueva venta
+export type PaymentMethod = 'efectivo' | 'yape' | 'lemon';
+
 export interface NewSaleData {
   clienteId: string | null;
   nombreCliente: string;
   items: SaleItem[];
   total: number;
+  paymentMethod: PaymentMethod;
 }
 
 // Mapeo de un documento de Firestore a un objeto Sale
@@ -52,6 +56,7 @@ const fromFirestore = (snapshot: QueryDocumentSnapshot<DocumentData>): Sale => {
     items: data.items,
     total: data.total,
     fecha: data.fecha,
+    paymentMethod: data.paymentMethod || 'efectivo', // Default to 'efectivo' for backward compatibility
   };
 };
 
@@ -93,7 +98,7 @@ export const addSale = async (saleData: NewSaleData): Promise<string> => {
       );
 
       // 2. VALIDAR el stock y preparar las actualizaciones
-      const updates: { ref: any, newStock: number }[] = [];
+      const updates: { ref: any, newStock: number | null }[] = [];
       for (let i = 0; i < productDocs.length; i++) {
         const productDoc = productDocs[i];
         const item = saleData.items[i];
@@ -102,7 +107,16 @@ export const addSale = async (saleData: NewSaleData): Promise<string> => {
           throw new Error(`Producto con ID ${item.productId} no encontrado.`);
         }
 
-        const currentStock = productDoc.data().stock;
+        const productData = productDoc.data();
+        const currentStock = productData.stock;
+        
+        // Si el stock es null, es un producto con stock ilimitado
+        if (currentStock === null) {
+          // No se actualiza el stock para productos con stock ilimitado
+          continue;
+        }
+        
+        // Para productos con stock limitado, validar y actualizar
         const newStock = currentStock - item.cantidad;
 
         if (newStock < 0) {

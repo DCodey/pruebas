@@ -6,6 +6,7 @@ import { getClients, addClient, updateClient, deleteClient, type Client } from '
 import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import ClientForm from '../../src/components/clientes/ClientForm';
+import { Table, TableContainer } from '../../src/components/ui/Table';
 
 function ClientesContent() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -37,7 +38,7 @@ function ClientesContent() {
     setCurrentClient(null);
   };
 
-  const handleSaveClient = async (formData: { nombre: string; descripcion: string; }) => {
+  const handleSaveClient = async (formData: { nombre: string; descripcion: string; celular: number }) => {
     setIsLoading(true);
     try {
       if (currentClient) {
@@ -73,7 +74,7 @@ function ClientesContent() {
     <>
       <PageLayout
         title="Clientes"
-        description="Una lista de todos los clientes, incluyendo su nombre y descripción."
+        description="Una lista de todos los clientes frecuentes."
         headerAction={(
           <button
             type="button"
@@ -86,37 +87,59 @@ function ClientesContent() {
         )}
       >
         {isLoading && <Loader />}
-        <div className="flex flex-col">
-          <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-              <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                      <th scope="col" className="relative px-6 py-3">
-                        <span className="sr-only">Acciones</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {clients.map((client) => (
-                      <tr key={client.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{client.nombre}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.descripcion}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          <button onClick={() => handleOpenModal(client)} className="text-primary-600 hover:text-primary-900"><PencilIcon className="h-5 w-5"/></button>
-                          <button onClick={() => handleDelete(client.id)} className="text-red-600 hover:text-red-900"><TrashIcon className="h-5 w-5"/></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
+        <TableContainer>
+          <Table
+            columns={[
+              {
+                key: 'nombre',
+                header: 'Nombre',
+                className: 'font-medium text-gray-900'
+              },
+              {
+                key: 'descripcion',
+                header: 'Descripción',
+                className: 'text-gray-500'
+              },
+              {
+                key: 'celular',
+                header: 'Celular',
+                className: 'text-gray-500'
+              },
+              {
+                key: 'actions',
+                header: 'Acciones',
+                className: 'text-right',
+                render: (client) => (
+                  <div className="space-x-2">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenModal(client);
+                      }} 
+                      className="text-primary-600 hover:text-primary-900"
+                    >
+                      <PencilIcon className="h-5 w-5"/>
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(client.id);
+                      }} 
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <TrashIcon className="h-5 w-5"/>
+                    </button>
+                  </div>
+                )
+              }
+            ]}
+            data={clients}
+            keyExtractor={(client) => client.id}
+            onRowClick={handleOpenModal}
+            emptyMessage="No hay clientes registrados"
+            rowClassName="hover:bg-gray-50 cursor-pointer"
+          />
+        </TableContainer>
       </PageLayout>
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={currentClient ? 'Editar Cliente' : 'Registrar Cliente'}>
