@@ -101,7 +101,7 @@ export default function SpecialServiceForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form id="special-service-form" onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="clientId" className="block text-sm font-medium text-gray-700">
           Cliente *
@@ -218,23 +218,6 @@ export default function SpecialServiceForm({
             />
           </div>
         </div>
-      </div>
-
-      <div className="mt-6 flex justify-end space-x-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? 'Guardando...' : 'Guardar'}
-        </button>
       </div>
     </form>
   );
