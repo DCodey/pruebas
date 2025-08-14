@@ -36,12 +36,12 @@ export default function Modal({ isOpen, onClose, title, children, footer }: Moda
               <h3 className="text-lg leading-6 font-medium text-gray-700 text-center pr-6" id="modal-title">
                 {title}
               </h3>
-              <div className="mt-4 max-h-[60vh] overflow-y-auto px-4">
+              <div className="mt-4 max-h-[60vh] overflow-y-auto px-1 md:px-4">
                 {children}
               </div>
             </div>
             {footer && (
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 border-t border-gray-200">
+              <div className="bg-gray-50 px-1 md:px-4 py-3 sm:px-6 border-t border-gray-200">
                 {footer}
               </div>
             )}

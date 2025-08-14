@@ -31,12 +31,12 @@ export interface Sale {
   nombreCliente: string;
   items: SaleItem[];
   total: number;
-  fecha: Timestamp;
+  fechaDeVenta: Timestamp;
   paymentMethod: PaymentMethod;
 }
 
 // Datos necesarios para crear una nueva venta
-export type PaymentMethod = 'efectivo' | 'yape' | 'lemon';
+export type PaymentMethod = 'Efectivo' | 'Tarjeta' | 'Yape' | 'Lemon';
 
 export interface NewSaleData {
   clienteId: string | null;
@@ -44,6 +44,7 @@ export interface NewSaleData {
   items: SaleItem[];
   total: number;
   paymentMethod: PaymentMethod;
+  fechaDeVenta: Date;
 }
 
 // Mapeo de un documento de Firestore a un objeto Sale
@@ -55,8 +56,8 @@ const fromFirestore = (snapshot: QueryDocumentSnapshot<DocumentData>): Sale => {
     nombreCliente: data.nombreCliente,
     items: data.items,
     total: data.total,
-    fecha: data.fecha,
-    paymentMethod: data.paymentMethod || 'efectivo', // Default to 'efectivo' for backward compatibility
+    fechaDeVenta: data.fechaDeVenta,
+    paymentMethod: data.paymentMethod || 'Efectivo', // Default to 'efectivo' for backward compatibility
   };
 };
 
@@ -64,7 +65,7 @@ const salesCollection = collection(db, 'sales');
 
 // Obtener todas las ventas
 export const getSales = async (): Promise<Sale[]> => {
-  const q = query(salesCollection, orderBy('fecha', 'desc'));
+  const q = query(salesCollection, orderBy('fechaDeVenta', 'desc'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(fromFirestore);
 };
@@ -73,9 +74,9 @@ export const getSales = async (): Promise<Sale[]> => {
 export const getSalesByDateRange = async (startDate: Date, endDate: Date): Promise<Sale[]> => {
   const q = query(
     salesCollection,
-    where('fecha', '>=', startDate),
-    where('fecha', '<=', endDate),
-    orderBy('fecha', 'desc')
+    where('fechaDeVenta', '>=', startDate),
+    where('fechaDeVenta', '<=', endDate),
+    orderBy('fechaDeVenta', 'desc')
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(fromFirestore);
@@ -128,7 +129,7 @@ export const addSale = async (saleData: NewSaleData): Promise<string> => {
       // 3. ESCRIBIR todos los datos
       // Crear la nueva venta
       const saleRef = doc(collection(db, 'sales'));
-      transaction.set(saleRef, { ...saleData, fecha: serverTimestamp() });
+      transaction.set(saleRef, { ...saleData});
 
       // Actualizar el stock de cada producto
       updates.forEach(update => {
