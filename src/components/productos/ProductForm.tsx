@@ -130,23 +130,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
 
         {/* Description */}
         <div>
-          <div className="flex justify-between">
-            <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
-              Descripción
-            </label>
-            <span className="text-xs text-gray-500">
-              {formData.descripcion.length}/{MAX_DESCRIPTION_LENGTH}
-            </span>
-          </div>
-          <textarea
+          <Input
+            as="textarea"
             id="descripcion"
             name="descripcion"
-            rows={3}
-            className="block w-full rounded-md border-0 border-gray-300 py-1.5 px-3 shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-inset sm:text-sm sm:leading-6"
+            label="Descripción"
+            placeholder="Describe el producto en detalle..."
             value={formData.descripcion}
             onChange={handleChange}
-            placeholder="Describe el producto en detalle..."
-            maxLength={MAX_DESCRIPTION_LENGTH}
+            rows={4}
           />
           {errors.descripcion && (
             <p className="mt-2 text-sm text-red-600">{errors.descripcion}</p>
