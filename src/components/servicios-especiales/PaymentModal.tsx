@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import Checkbox from '../ui/Checkbox';
+import Select from '../ui/Select';
 import { updateSpecialService, getSpecialService } from '../../services/specialService';
 import Loader from '../ui/Loader';
-import { addWeeks, addMonths, addYears, format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore, isAfter, addDays } from 'date-fns';
+import {
+  addWeeks,
+  addMonths,
+  addYears,
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  isBefore,
+  isSameMonth,
+  isSameYear,
+  eachMonthOfInterval,
+} from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface Thursday {
@@ -36,49 +49,85 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [validUntil, setValidUntil] = useState<string>('');
   const [thursdays, setThursdays] = useState<Thursday[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [availableMonths, setAvailableMonths] = useState<Date[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [selectedPaymentMonth, setSelectedPaymentMonth] = useState<Date | null>(null);
+  const [selectedPaymentWeek, setSelectedPaymentWeek] = useState<Date | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+
+  // Generate available months for payment selection
+  const generateAvailableMonths = () => {
+    if (!serviceStartDate) return [];
+
+    const start = new Date(serviceStartDate);
+    const end = addMonths(start, 8); // Show 12 months from start date
+
+    return eachMonthOfInterval({
+      start,
+      end
+    });
+  };
+
+  // Generate available years for annual payment selection
+  const generateAvailableYears = () => {
+    const currentYear = new Date().getFullYear();
+    const serviceYear = serviceStartDate
+      ? new Date(serviceStartDate).getFullYear()
+      : currentYear;
+
+    const startYear = Math.min(currentYear, serviceYear); // el menor de los dos
+
+    return Array.from({ length: 5 }, (_, i) => startYear + i);
+  };
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setPaymentDate('');
       setError(null);
-      // Set initial month to service start date if available
+      setSelectedPaymentMonth(null);
+      setAvailableYears(generateAvailableYears());
+
       if (serviceStartDate) {
-        setSelectedMonth(new Date(serviceStartDate));
+        const start = new Date(serviceStartDate);
+        setSelectedMonth(start);
+        setAvailableMonths(generateAvailableMonths());
       } else {
-        setSelectedMonth(new Date()); // Reset to current month if no start date
+        const today = new Date();
+        setSelectedMonth(today);
+        setAvailableMonths(generateAvailableMonths());
       }
     }
   }, [isOpen, serviceStartDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let isPaid = paymentDate >= today;
-    
-    if (!paymentDate) {
-      setError('Por favor selecciona una fecha');
+
+    if (!selectedPaymentMonth) {
+      setError('Por favor selecciona un mes de pago');
       return;
     }
+
+    // Set payment date to the first day of the selected month
+    const paymentDate = startOfMonth(selectedPaymentMonth).toISOString().split('T')[0];
+    let isPaid = new Date(paymentDate) >= new Date(today);
+
+    // Clear any previous errors
+    setError(null);
 
     try {
       setIsLoading(true);
       setError(null);
-      
-      const selectedDate = new Date(paymentDate);
+
+      const selectedDate = startOfMonth(new Date(paymentDate));
       let validUntilDate: Date;
 
-      switch (paymentFrequency) {
-        case 'weekly':
-          validUntilDate = addWeeks(selectedDate, 1);
-          break;
-        case 'monthly':
-          validUntilDate = addMonths(selectedDate, 1);
-          break;
-        case 'yearly':
-          validUntilDate = addYears(selectedDate, 1);
-          break;
-        default:
-          validUntilDate = addWeeks(selectedDate, 1);
+      // Always set valid until to the end of the selected month
+      validUntilDate = endOfMonth(selectedDate);
+
+      // For yearly payments, add 1 year to the end of the selected month
+      if (paymentFrequency === 'yearly') {
+        validUntilDate = addYears(validUntilDate, 1);
       }
 
       // Format dates for Firestore
@@ -90,16 +139,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         paymentFrequency: paymentFrequency,
         updatedAt: now
       };
-      
+
       console.log('Updating payment with data:', paymentData);
-      
+
       // First get the current service data
       const currentService = await getSpecialService(serviceId);
-      
+
       if (!currentService) {
         throw new Error('Servicio no encontrado');
       }
-      
+
       // Update the service with payment data
       await updateSpecialService(serviceId, {
         ...currentService,
@@ -114,7 +163,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         isActive: currentService.isActive !== false,
         description: currentService.description || ''
       });
-      
+
       onPaymentSuccess();
       onClose();
     } catch (error) {
@@ -129,10 +178,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const getThursdaysInMonth = (date: Date) => {
     const start = startOfMonth(date);
     const end = endOfMonth(date);
-    
+
     const allDays = eachDayOfInterval({ start, end });
     const thursdays = allDays.filter(day => day.getDay() === 4); // 4 = Thursday
-    
+
     return thursdays.map(thursday => {
       const serviceStart = serviceStartDate ? new Date(serviceStartDate) : null;
       const isBeforeServiceStart = serviceStart ? thursday < new Date(serviceStart.setHours(0, 0, 0, 0)) : false;
@@ -154,58 +203,44 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }, [selectedMonth, paymentFrequency]);
 
-  // Handle month navigation
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    setSelectedMonth(prev => {
-      const newMonth = new Date(prev);
-      newMonth.setMonth(direction === 'prev' ? prev.getMonth() - 1 : prev.getMonth() + 1);
-      return newMonth;
-    });
-  };
 
-  // Handle Thursday selection
-  const handleThursdaySelect = (selectedDate: Date, isSelected: boolean) => {
-    // Check if the selected date is before the service start date
-    if (serviceStartDate) {
-      const startDate = new Date(serviceStartDate);
-      startDate.setHours(0, 0, 0, 0);
-      if (isBefore(selectedDate, startDate)) {
-        setError('No puedes seleccionar una fecha anterior al inicio del servicio');
-        return;
-      }
-    }
-
-    // For single selection mode
-    if (isSelected) {
-      setPaymentDate(selectedDate.toISOString().split('T')[0]);
-      setError(null);
-      
-      // Update Thursdays with new selection
-      setThursdays(prev => 
-        prev.map(thursday => ({
-          ...thursday,
-          isSelected: isSameDay(thursday.date, selectedDate) ? isSelected : false
-        }))
-      );
-    }
-  };
-
-  // Handle date input change
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedDate = e.target.value;
-    const date = new Date(selectedDate);
-    
-    if (serviceStartDate) {
-      const startDate = new Date(serviceStartDate);
-      startDate.setHours(0, 0, 0, 0);
-      if (date < startDate) {
-        setError('No puedes seleccionar una fecha anterior al inicio del servicio');
-        return;
-      }
-    }
-    
-    setPaymentDate(selectedDate);
+  // Handle month selection for payment
+  const handleMonthSelect = (month: Date) => {
+    setSelectedPaymentMonth(month);
+    setPaymentDate(month.toISOString().split('T')[0]);
     setError(null);
+  };
+
+  // Handle year selection for annual payment
+  const handleYearSelect = (year: number) => {
+    setSelectedYear(year);
+    const firstDayOfYear = new Date(year, 0, 1);
+    setPaymentDate(firstDayOfYear.toISOString().split('T')[0]);
+    setError(null);
+  };
+
+  // Handle week selection
+  const handleWeekSelect = (week: Date) => {
+    setSelectedPaymentWeek(week);
+    setPaymentDate(week.toISOString().split('T')[0]);
+    setError(null);
+  };
+
+  // Check if a month is the currently selected payment month
+  const isMonthSelected = (month: Date) => {
+    return selectedPaymentMonth
+      ? isSameMonth(month, selectedPaymentMonth) && isSameYear(month, selectedPaymentMonth)
+      : false;
+  };
+
+  // Check if a year is the currently selected year
+  const isYearSelected = (year: number) => {
+    return year === selectedYear;
+  };
+
+  // Format month for display (e.g., 'Enero 2023')
+  const formatMonth = (date: Date) => {
+    return format(date, 'MMMM yyyy', { locale: es });
   };
 
   // Calculate valid until date based on payment frequency
@@ -235,159 +270,245 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setValidUntil(format(newValidUntil, 'PPP', { locale: es }));
   }, [paymentDate, paymentFrequency]);
 
-  // Get current month and year for display
-  const currentMonthYear = format(selectedMonth, 'MMMM yyyy', { locale: es });
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0];
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Registrar Pago">
-      <div className="mt-4">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700 mb-1">
-              Frecuencia de Pago *
-            </label>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {[
-                { value: 'weekly', label: 'Semanal' },
-                { value: 'monthly', label: 'Mensual' },
-                { value: 'yearly', label: 'Anual' }
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setPaymentFrequency(option.value as 'weekly' | 'monthly' | 'yearly')}
-                  className={`py-2 px-3 rounded-md text-sm font-medium ${
-                    paymentFrequency === option.value
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+  // Render month selection view
+  const renderMonthlyView = () => (
+    <div className="space-y-4">
+      <h3 className="text-sm font-medium text-gray-700">Selecciona hasta qué mes deseas pagar:</h3>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {availableMonths.map((month, index) => {
+          const isSelected = isMonthSelected(month);
+          // Deshabilitar meses anteriores a la fecha de inicio del servicio
+          const isPast = serviceStartDate
+            ? isBefore(month, startOfMonth(new Date(serviceStartDate)))
+            : isBefore(month, startOfMonth(new Date()));
 
-            {paymentFrequency === 'weekly' ? (
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-gray-700">Jueves de {currentMonthYear}</h3>
-                  <div className="flex space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => navigateMonth('prev')}
-                      className="p-1 rounded-full hover:bg-gray-100"
-                      title="Mes anterior"
-                    >
-                      &larr;
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigateMonth('next')}
-                      className="p-1 rounded-full hover:bg-gray-100"
-                      title="Siguiente mes"
-                    >
-                      &rarr;
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto p-1">
-                  {thursdays.map((thursday) => {
-                    const isDisabled = thursday.isDisabled || (serviceStartDate && isBefore(thursday.date, new Date(serviceStartDate)));
-                    const isPast = isBefore(thursday.date, new Date());
-                    
-                    return (
-                      <div 
-                        key={thursday.formatted} 
-                        className={`flex items-center p-2 rounded-md ${isDisabled ? 'opacity-60' : 'hover:bg-gray-50'}`}
-                      >
-                        <Checkbox
-                          id={`thursday-${thursday.formatted}`}
-                          checked={thursday.isSelected}
-                          onChange={(e) => handleThursdaySelect(thursday.date, e.target.checked)}
-                          disabled={isDisabled}
-                          label={
-                            <span className={`text-sm ${isPast ? 'text-gray-500' : 'text-gray-800'}`}>
-                              {thursday.formatted}
-                              {isPast && !isDisabled && ' (pasado)'}
-                            </span>
-                          }
-                          containerClassName="w-full"
-                          labelClassName={`ml-2 ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-                {serviceStartDate && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Fecha de inicio del servicio: {format(new Date(serviceStartDate), 'dd/MM/yyyy')}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <>
-                <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha de Pago *
-                </label>
-                <input
-                  type="date"
-                  id="paymentDate"
-                  value={paymentDate}
-                  onChange={handleDateChange}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm mb-4"
-                  min={serviceStartDate ? format(new Date(serviceStartDate), 'yyyy-MM-dd') : undefined}
-                  max={today}
-                  required
-                />
-              </>
-            )}
-
-            {validUntil && (
-              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-blue-700">
-                      El pago será válido hasta el: <span className="font-semibold">{validUntil}</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-          </div>
-          
-          <div className="flex justify-end space-x-3 pt-4">
+          return (
             <button
+              key={index}
               type="button"
-              onClick={onClose}
-              className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              disabled={isLoading}
+              onClick={() => handleMonthSelect(month)}
+              disabled={isPast}
+              className={`relative flex items-center justify-center rounded-md border p-3 text-sm font-medium focus:outline-none ${isSelected
+                ? 'bg-primary-100 border-primary-500 text-primary-700 z-10'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                } ${isPast ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
             >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span className="mr-2">
-                    <Loader />
-                  </span>
-                  Procesando...
-                </>
-              ) : (
-                'Registrar Pago'
+              {formatMonth(month)}
+              {isSelected && (
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary-500" />
               )}
             </button>
+          );
+        })}
+      </div>
+
+      {selectedPaymentMonth && (
+        <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+          <p className="text-sm text-blue-700">
+            <span className="font-medium">Mes seleccionado:</span> {formatMonth(selectedPaymentMonth)}
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Válido hasta el {validUntil}
+          </p>
+        </div>
+      )}
+
+      {serviceStartDate && (
+        <p className="text-xs text-gray-500 mt-2">
+          Fecha de inicio del servicio: {format(new Date(serviceStartDate), 'dd/MM/yyyy')}
+        </p>
+      )}
+    </div>
+  );
+
+  const renderWeeklyView = () => {
+    // Get all Thursdays in the current month
+    const thursdays = getThursdaysInMonth(selectedMonth);
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-gray-700">Selecciona hasta qué semana deseas pagar:</h3>
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => {
+                const prevMonth = new Date(selectedMonth);
+                prevMonth.setMonth(prevMonth.getMonth() - 1);
+                setSelectedMonth(prevMonth);
+              }}
+              className="p-1 text-gray-500 hover:text-gray-700"
+            >
+              &larr;
+            </button>
+            <span className="text-sm font-medium">
+              {format(selectedMonth, 'MMMM yyyy', { locale: es })}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const nextMonth = new Date(selectedMonth);
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                setSelectedMonth(nextMonth);
+              }}
+              className="p-1 text-gray-500 hover:text-gray-700"
+            >
+              &rarr;
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {thursdays.map((thursday, index) => {
+            const isDisabled = thursday.isDisabled || (serviceStartDate && isBefore(thursday.date, new Date(serviceStartDate)));
+            const isPast = isBefore(thursday.date, new Date());
+            const isSelected = selectedPaymentWeek ? isSameDay(thursday.date, selectedPaymentWeek) : false;
+
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => !isDisabled && handleWeekSelect(thursday.date)}
+                disabled={isDisabled}
+                className={`relative flex flex-col items-center justify-center rounded-md border p-3 text-sm font-medium focus:outline-none ${isSelected
+                  ? 'bg-primary-100 border-primary-500 text-primary-700 z-10'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+              >
+                <span className={`text-sm ${isPast ? 'text-gray-500' : 'text-gray-800'}`}>
+                  {format(thursday.date, 'dd')}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {format(thursday.date, 'MMM', { locale: es })}
+                </span>
+                {isSelected && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary-500" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {selectedPaymentWeek && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+            <p className="text-sm text-blue-700">
+              <span className="font-medium">Semana seleccionada:</span>{' '}
+              {format(selectedPaymentWeek, 'dd MMMM yyyy', { locale: es })}
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Válido hasta el {validUntil}
+            </p>
+          </div>
+
+
+        )}
+
+        {serviceStartDate && (
+          <p className="text-xs text-gray-500 mt-2">
+            Fecha de inicio del servicio: {format(new Date(serviceStartDate), 'dd/MM/yyyy')}
+          </p>
+        )}
+      </div>
+    );
+  };
+
+  // Render annual payment view
+  const renderAnnualView = () => (
+    <div className="space-y-4">
+      <h3 className="text-sm font-medium text-gray-700">Selecciona el año de pago:</h3>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {availableYears.map((year) => (
+          <button
+            key={year}
+            type="button"
+            onClick={() => handleYearSelect(year)}
+            className={`relative flex items-center justify-center rounded-md border p-4 text-sm font-medium focus:outline-none ${isYearSelected(year)
+              ? 'bg-primary-100 border-primary-500 text-primary-700 z-10'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+          >
+            {year}
+            {isYearSelected(year) && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary-500" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {selectedYear && (
+        <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+          <p className="text-sm text-blue-700">
+            <span className="font-medium">Pago anual seleccionado:</span>{' '}
+            {selectedYear}
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Válido hasta el 31 de diciembre de {selectedYear}
+          </p>
+        </div>
+      )}
+
+      {serviceStartDate && (
+        <p className="text-xs text-gray-500 mt-2">
+          Fecha de inicio del servicio: {format(new Date(serviceStartDate), 'dd/MM/yyyy')}
+        </p>
+      )}
+    </div>
+  );
+
+  const modalFooter = (
+    <div className="flex justify-end gap-x-3">
+      <button
+        type="button"
+        onClick={onClose}
+        className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        disabled={isLoading}
+      >
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        form="special-service-form"
+        className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-70 flex items-center"
+        disabled={isLoading}
+      >
+        Guardar
+      </button>
+    </div>
+  );
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Registrar Pago" footer={modalFooter}>
+      <div className="mt-4">
+        <form id="special-service-form" onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
+            <Select
+              label="Forma de pago"
+              id="paymentFrequency"
+              value={paymentFrequency}
+              onChange={(e) => setPaymentFrequency(e.target.value as 'weekly' | 'monthly' | 'yearly')}
+              options={[
+                { value: 'weekly', label: 'Semanal' },
+                { value: 'monthly', label: 'Mensual' },
+                { value: 'yearly', label: 'Anual' },
+              ]}
+              containerClassName="mb-4"
+            />
+
+            {paymentFrequency === 'weekly' && (
+              renderWeeklyView()
+            )}
+
+            {/* Month Selection */}
+            {paymentFrequency === 'monthly' && availableMonths.length > 0 && (
+              renderMonthlyView()
+            )}
+
+            {paymentFrequency === 'yearly' && renderAnnualView()}
+
+            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
           </div>
         </form>
       </div>
