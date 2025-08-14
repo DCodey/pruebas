@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import type { NewSaleData, SaleItem, PaymentMethod } from '../../services/saleService';
 import { getClients, type Client } from '../../services/clientService';
 import { getProducts, type Product } from '../../services/productService';
+import { 
+  getCurrentDateUTC, 
+  formatForDateInput,
+  updateDateKeepingTime,
+} from '../../utils/dateUtils';
 import Input from '../ui/Input';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
@@ -18,13 +23,14 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   // Datos de la BD
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [fechaDeVenta, setFechaDeVenta] = useState<Date>(getCurrentDateUTC());
   
   // Estado de la venta actual
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [anonymousClientName, setAnonymousClientName] = useState('');
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Efectivo');
 
   // Campos para producto personalizado
   const [customProductName, setCustomProductName] = useState('');
@@ -124,12 +130,13 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
       items: saleItems,
       total,
       paymentMethod,
+      fechaDeVenta: fechaDeVenta,
     };
     onSubmit(saleData);
   };
 
   return (
-    <form id="sale-form" onSubmit={handleSubmit} className="space-y-6 p-1 sm:p-4 max-w-4xl mx-auto">
+    <form id="sale-form" onSubmit={handleSubmit} className="space-y-6 sm:p-4 max-w-4xl mx-auto">
       {/* Sección de Cliente */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
@@ -193,6 +200,31 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
               />
             </div>
           )}
+        </div>
+      </div>
+
+       {/* Método de Pago */}
+       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">Método de Pago</h3>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {(['Efectivo', 'Yape', 'Lemon', 'Tarjeta'] as PaymentMethod[]).map((method) => (
+              <label key={method} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  checked={paymentMethod === method}
+                  onChange={() => setPaymentMethod(method)}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700 capitalize">
+                  {method}
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -299,37 +331,24 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Método de Pago */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Método de Pago</h3>
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {(['efectivo', 'yape', 'lemon'] as PaymentMethod[]).map((method) => (
-              <label key={method} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  checked={paymentMethod === method}
-                  onChange={() => setPaymentMethod(method)}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-                />
-                <span className="ml-2 text-sm font-medium text-gray-700 capitalize">
-                  {method}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
+      </div>    
 
       {/* Resumen de la Venta */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Resumen de la Venta</h3>
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+          <h3 className="text-lg text-sm font-medium md:text-xl text-gray-900">Resumen de la Venta</h3>
+          <div className="flex items-center text-sm">
+              <input 
+                type="date" 
+                value={formatForDateInput(fechaDeVenta)} 
+                onChange={(e) => {
+                  // Actualizar solo la fecha, manteniendo la hora actual
+                  const newDate = updateDateKeepingTime(fechaDeVenta, e.target.value);
+                  setFechaDeVenta(newDate);
+                }} 
+                className="block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-2 px-3 border"
+              />
+            </div>
         </div>
         <div className="p-4">
           {saleItems.length === 0 ? (
@@ -338,7 +357,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
               <p className="text-sm mt-1">Agrega productos usando el formulario superior</p>
             </div>
           ) : (
-            <>
+            <>            
               <div className="divide-y divide-gray-200">
                 {saleItems.map((item, index) => (
                   <div key={item.productId || `${item.nombre}-${index}`} className="py-3 flex items-center justify-between">
@@ -372,7 +391,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
                         );
                       })()}
                     </div>
-                    <div className="ml-4 flex items-center space-x-4">
+                    <div className="ml-4 flex items-center space-x-2 sm:space-x-4">
                       <div className="flex items-center border rounded-md">
                         <button
                           type="button"
@@ -386,7 +405,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
                           value={item.cantidad}
                           min="1"
                           onChange={e => updateItemQuantity(index, parseInt(e.target.value, 10) || 1)}
-                          className="w-12 text-center border-0 focus:ring-0"
+                          className="sm:w-12 w-8 text-center border-0 focus:ring-0"
                         />
                         <button
                           type="button"
@@ -396,7 +415,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
                           +
                         </button>
                       </div>
-                      <div className="w-24 text-right">
+                      <div className="w-auto text-right border">
                         <p className="text-sm font-medium">S/{(item.cantidad * item.precioUnitario).toFixed(2)}</p>
                         <p className="text-xs text-gray-500">S/{item.precioUnitario.toFixed(2)} c/u</p>
                       </div>

@@ -106,7 +106,7 @@ function VentasContent() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {sales.map((sale) => (
                       <tr key={sale.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(sale.fecha.seconds * 1000).toLocaleString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(sale.fechaDeVenta.seconds * 1000).toLocaleString()}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{sale.nombreCliente}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-[200px] md:max-w-[300px] overflow-hidden text-ellipsis">{sale.items.map(item => item.nombre).join(', ')}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{sale.items.length}</td>
@@ -192,7 +192,7 @@ function VentasContent() {
           {saleToDelete && (
             <div className="mt-4 p-4 bg-gray-50 rounded-md">
               <p><strong>Cliente:</strong> {saleToDelete.nombreCliente}</p>
-              <p><strong>Fecha:</strong> {new Date(saleToDelete.fecha.seconds * 1000).toLocaleString()}</p>
+              <p><strong>Fecha:</strong> {new Date(saleToDelete.fechaDeVenta.seconds * 1000).toLocaleString()}</p>
               <p><strong>Total:</strong> S/{saleToDelete.total.toFixed(2)}</p>
               <p className="mt-2">Esta acción no se puede deshacer.</p>
             </div>

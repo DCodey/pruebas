@@ -152,7 +152,7 @@ export function Resumen() {
                   key: 'fecha',
                   header: 'Fecha',
                   className: 'text-gray-600',
-                  render: (sale) => new Date(sale.fecha.seconds * 1000).toLocaleString()
+                  render: (sale) => new Date(sale.fechaDeVenta.seconds * 1000).toLocaleString()
                 },
                 {
                   key: 'cliente',

@@ -50,7 +50,7 @@ export const generateSalesReportPdf = ({
   // Procesar datos para la tabla
   sales.forEach(sale => {
     const saleData = [
-      sale.fecha.toDate().toLocaleDateString(),
+      sale.fechaDeVenta.toDate().toLocaleDateString(),
       sale.nombreCliente || 'Cliente no registrado',
       sale.items.map(item => `${item.cantidad}x ${item.nombre}`).join(', '),
       `S/ ${sale.total.toFixed(2)}`
