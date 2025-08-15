@@ -29,7 +29,17 @@ function ClientesContent() {
   }, []);
 
   const handleOpenModal = (client: Client | null = null) => {
-    setCurrentClient(client);
+    if (client) {
+      setCurrentClient({
+        ...client,
+        name: client.name || '',
+        description: client.description || '',
+        phone: client.phone || '',
+        document_number: client.document_number
+      });
+    } else {
+      setCurrentClient(null);
+    }
     setIsModalOpen(true);
   };
 
@@ -38,15 +48,28 @@ function ClientesContent() {
     setCurrentClient(null);
   };
 
-  const handleSaveClient = async (formData: { nombre: string; descripcion: string; celular: number }) => {
+  interface ClientFormData {
+    nombre: string;
+    descripcion: string;
+    celular: number;
+    numeroDocumento?: string;
+  }
+
+  const handleSaveClient = async (formData: Omit<Client, 'id'>) => {
     setIsLoading(true);
     try {
       if (currentClient) {
         await updateClient(currentClient.id, formData);
-        setClients(clients.map(c => c.id === currentClient.id ? { ...c, ...formData } : c));
+        setClients(clients.map(c => c.id === currentClient.id ? { 
+          ...c, 
+          ...formData
+        } : c));
       } else {
         const newId = await addClient(formData);
-        setClients([...clients, { id: newId, ...formData }]);
+        setClients([...clients, { 
+          id: newId, 
+          ...formData
+        }]);
       }
       handleCloseModal();
     } catch (error) {
@@ -111,24 +134,28 @@ function ClientesContent() {
           <Table
             columns={[
               {
-                key: 'nombre',
+                key: 'name',
                 header: 'Nombre',
-                className: 'font-medium text-gray-900'
+                className: 'font-medium text-gray-900',
+                render: (client: Client) => client.name || 'Sin nombre'
               },
               {
-                key: 'descripcion',
+                key: 'description',
                 header: 'Descripción',
-                className: 'text-gray-500'
+                className: 'text-gray-500',
+                render: (client: Client) => client.description || 'Sin descripción'
               },
               {
-                key: 'celular',
+                key: 'phone',
                 header: 'Celular',
-                className: 'text-gray-500'
+                className: 'text-gray-500',
+                render: (client: Client) => client.phone || 'Sin teléfono'
               },
               {
-                key: 'numeroDocumento',
+                key: 'document_number',
                 header: 'Número de Documento',
-                className: 'text-gray-500'
+                className: 'text-gray-500',
+                render: (client: Client) => client.document_number || 'Sin documento'
               },
               {
                 key: 'actions',

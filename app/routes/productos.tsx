@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { getProducts, addProduct, updateProduct, deleteProduct, type Product } from '../../src/services/productService';
+import { getProducts, addProduct, updateProduct, deleteProduct, type Product } from '../../src/services/firebase/productService';
 import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import ProductForm from '../../src/components/productos/ProductForm';

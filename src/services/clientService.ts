@@ -1,50 +1,46 @@
-import { db } from '../firebase/config';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, type DocumentData, type QueryDocumentSnapshot } from 'firebase/firestore';
+import api from './axiosConfig';
 
-// Definimos la interfaz del Cliente para tipado estricto
 export interface Client {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  celular: number;
-  numeroDocumento?: string;
+    id: string;
+    name: string;
+    description: string;
+    phone: string;
+    document_number?: string;
 }
 
-// Referencia a la colección 'clientes' en Firestore
-const clientesCollection = collection(db, 'clientes');
-
-// Helper para convertir un snapshot de documento a nuestro tipo Client
-const fromFirestore = (snapshot: QueryDocumentSnapshot<DocumentData>): Client => {
-  const data = snapshot.data();
-  return {
-    id: snapshot.id,
-    nombre: data.nombre,
-    descripcion: data.descripcion,
-    celular: data.celular,
-    numeroDocumento: data.numeroDocumento || '',
-  };
-};
-
-// OBTENER todos los clientes
+// ✅ Obtener todos los clientes
 export const getClients = async (): Promise<Client[]> => {
-  const querySnapshot = await getDocs(clientesCollection);
-  return querySnapshot.docs.map(fromFirestore);
+    const response = await api.get<{ success: boolean; data: Client[] }>('/clients');
+    return response.data.data;
 };
 
-// AÑADIR un nuevo cliente
+// ✅ Añadir un nuevo cliente
 export const addClient = async (clientData: Omit<Client, 'id'>): Promise<string> => {
-  const docRef = await addDoc(clientesCollection, clientData);
-  return docRef.id;
+    const response = await api.post<{ success: boolean; data: Client }>('/clients', {
+        name: clientData.name,
+        description: clientData.description,
+        phone: clientData.phone,
+        document_number: clientData.document_number
+    });
+
+    return response.data.data.id;
 };
 
-// ACTUALIZAR un cliente existente
-export const updateClient = async (id: string, clientData: Partial<Omit<Client, 'id'>>): Promise<void> => {
-  const clientDoc = doc(db, 'clientes', id);
-  await updateDoc(clientDoc, clientData);
+// ✅ Actualizar un cliente existente
+export const updateClient = async (
+    id: string,
+    clientData: Partial<Omit<Client, 'id'>>
+): Promise<void> => {
+    const updateData: Partial<Client> = {};
+    if (clientData.name !== undefined) updateData.name = clientData.name;
+    if (clientData.description !== undefined) updateData.description = clientData.description;
+    if (clientData.phone !== undefined) updateData.phone = String(clientData.phone);
+    if (clientData.document_number !== undefined) updateData.document_number = clientData.document_number;
+
+    await api.put(`/clients/${id}`, updateData);
 };
 
-// ELIMINAR un cliente
+// ✅ Eliminar un cliente
 export const deleteClient = async (id: string): Promise<void> => {
-  const clientDoc = doc(db, 'clientes', id);
-  await deleteDoc(clientDoc);
+    await api.delete(`/clients/${id}`);
 };

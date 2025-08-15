@@ -16,19 +16,33 @@ export function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    
+  
     try {
       if (isLogin) {
-        await login(email, password);
+        const response = await login(email, password);
+  
+        if (!response.success) {
+          setError(response.message || 'Error al iniciar sesión');
+          return;
+        }
+  
       } else {
-        await signup(email, password);
+        const response = await signup(email, password);
+  
+        if (!response.success) {
+          setError(response.message || 'Error al crear cuenta');
+          return;
+        }
       }
-      navigate(ROUTES.RESUMEN, { replace: true }); 
+  
+      navigate(ROUTES.RESUMEN, { replace: true });
+  
     } catch (err) {
-      setError('Error al ' + (isLogin ? 'iniciar sesión' : 'crear cuenta'));
+      setError('Error inesperado');
       console.error(err);
     }
   }
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

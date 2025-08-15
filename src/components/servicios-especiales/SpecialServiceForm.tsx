@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { SpecialService } from '../../services/specialService';
-import { getClients, type Client } from '../../services/clientService';
+import type { SpecialService } from '../../services/firebase/specialService';
+import { getClients, type Client } from '../../services/firebase/clientService';
 import Checkbox from '../ui/Checkbox';
 
 interface SpecialServiceFormProps {
