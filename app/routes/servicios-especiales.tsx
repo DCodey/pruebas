@@ -8,7 +8,7 @@ import {
   updateSpecialService, 
   type SpecialService, 
   deleteDefinitiveSpecialService
-} from '../../src/services/specialService';
+} from '../../src/services/firebase/specialService';
 import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import SpecialServiceForm from '../../src/components/servicios-especiales/SpecialServiceForm';

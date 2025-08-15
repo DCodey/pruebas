@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Select from '../ui/Select';
-import { updateSpecialService, getSpecialService } from '../../services/specialService';
+import { updateSpecialService, getSpecialService } from '../../services/firebase/specialService';
 import Loader from '../ui/Loader';
 import {
   addWeeks,

@@ -1,21 +1,25 @@
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useEffect, useState } from 'react';
 import { ROUTES } from '../../routes/paths';
 
 export default function ProtectedRoute() {
-  const { currentUser } = useAuth();
   const location = useLocation();
+  const [tokenExists, setTokenExists] = useState<boolean | null>(null); // null = aún no verificado
 
-  console.log('🔥 ProtectedRoute montado en:', location.pathname);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('authToken');
+      setTokenExists(!!token);
+    }
+  }, []);
 
+  // Mientras verificamos si hay token, no renderizamos nada
+  if (tokenExists === null) {
+    return null;
+  }
 
-  console.log('>> PROTECTED ROUTE', {
-    path: location.pathname,
-    user: currentUser,
-  });
-
-  //  Usuario no autenticado
-  if (!currentUser) {
+  // Si no hay token, redirigir al login
+  if (!tokenExists) {
     return (
       <Navigate
         to={ROUTES.LOGIN}
@@ -25,7 +29,6 @@ export default function ProtectedRoute() {
     );
   }
 
-  // ✅ Usuario autenticado, muestra las rutas protegidas
+  // Token presente, permitir acceso
   return <Outlet />;
-
 }

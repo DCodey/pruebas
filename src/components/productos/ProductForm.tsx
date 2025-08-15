@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Product } from '../../services/productService';
+import type { Product } from '../../services/firebase/productService';
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 

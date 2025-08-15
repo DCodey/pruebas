@@ -1,18 +1,10 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
-} from 'firebase/auth';
-import type { User, UserCredential } from 'firebase/auth';
-import { auth } from '../firebase/config';
-import Loader from 'src/components/ui/Loader';
+import { createContext, useContext, useState } from 'react';
+import { userService } from '../services/userService';
 
 interface AuthContextType {
-  currentUser: User | null;
-  signup: (email: string, password: string) => Promise<UserCredential>;
-  login: (email: string, password: string) => Promise<UserCredential>;
+  currentUser: any | null;
+  signup: (email: string, password: string) => Promise<any>;
+  login: (email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
 }
 
@@ -27,43 +19,35 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+  const signup = (email: string, password: string) =>{
+    //por ahora no hace nada
+    return Promise.resolve();
+  }
 
-
-  const signup = (email: string, password: string) =>
-    createUserWithEmailAndPassword(auth, email, password);
-
-  const login = (email: string, password: string) =>
-    signInWithEmailAndPassword(auth, email, password);
+  const login = async (email: string, password: string) => {
+    const response = await userService.login({ email, password });
+    
+    console.log('usuario logueado', response);
+  
+    if (response.success) {
+      setCurrentUser(response.user);
+      }
+  
+    return response;
+  };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-      setCurrentUser(null);
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      throw error;
-    }
-  };
+    userService.logout();
+    setCurrentUser(null);
+    };
   const value: AuthContextType = {
     currentUser,
     signup,
     login,
     logout
   };
-
-  if (loading) {
-    return <Loader />
-  }
 
   return (
     <AuthContext.Provider value={value}>

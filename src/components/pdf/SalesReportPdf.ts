@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import type { Sale } from '../../services/saleService';
+import type { Sale } from '../../services/firebase/saleService';
 import { autoTable } from 'jspdf-autotable';
 
 interface SalesReportPdfProps {

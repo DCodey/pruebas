@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import type { NewSaleData, SaleItem, PaymentMethod } from '../../services/saleService';
-import { getClients, type Client } from '../../services/clientService';
-import { getProducts, type Product } from '../../services/productService';
+import type { NewSaleData, SaleItem, PaymentMethod } from '../../services/firebase/saleService';
+import { getClients, type Client } from '../../services/firebase/clientService';
+import { getProducts, type Product } from '../../services/firebase/productService';
 import { 
   getCurrentDateUTC, 
   formatForDateInput,

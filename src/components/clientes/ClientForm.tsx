@@ -4,73 +4,87 @@ import Input from '../ui/Input';
 
 interface ClientFormProps {
   client: Client | null;
-  onSubmit: (formData: { 
-    nombre: string; 
-    descripcion: string; 
-    celular: number; 
-    numeroDocumento?: string;
-  }) => void;
+  onSubmit: (formData: Omit<Client, 'id'>) => void;
   onClose: () => void;
 }
 
 export default function ClientForm({ client, onSubmit, onClose }: ClientFormProps) {
-  const [formData, setFormData] = useState({ 
-    nombre: '', 
-    descripcion: '', 
-    celular: 0, 
-    numeroDocumento: '' 
+  const [formData, setFormData] = useState<Omit<Client, 'id'>>({
+    name: '',
+    description: '',
+    phone: '',
+    document_number: ''
   });
 
   useEffect(() => {
     if (client) {
-      setFormData({ nombre: client.nombre, descripcion: client.descripcion, celular: Number(client.celular), numeroDocumento: client.numeroDocumento || '' });
+      setFormData({
+        name: client.name,
+        description: client.description,
+        phone: client.phone,
+        document_number: client.document_number || ''
+      });
     } else {
-      setFormData({ nombre: '', descripcion: '', celular: 0, numeroDocumento: '' });
+      setFormData({
+        name: '',
+        description: '',
+        phone: '',
+        document_number: ''
+      });
     }
   }, [client]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value } = e.target as HTMLInputElement;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const clientData: Omit<Client, 'id'> = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      phone: formData.phone,
+      ...(formData.document_number && { document_number: formData.document_number.trim() })
+    };
+    onSubmit(clientData);
   };
 
   return (
     <form id="client-form" onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-6 pt-4">
           <Input
-            id="nombre"
-            name="nombre"
+            id="name"
+            name="name"
             label="Nombre del Cliente *"
-            value={formData.nombre}
+            value={formData.name}
             onChange={handleChange}
             required
           />
           <Input
-            id="celular"
-            name="celular"
+            id="phone"
+            name="phone"
             label="Celular"
-            value={formData.celular}
+            value={formData.phone || ''}
             onChange={handleChange}
           />
           <Input
-            id="numeroDocumento"
-            name="numeroDocumento"
+            id="document_number"
+            name="document_number"
             label="Número de Documento"
             placeholder="DNI o RUC"
-            value={formData.numeroDocumento}
+            value={formData.document_number}
             onChange={handleChange}
           />
           <Input
             as="textarea"
-            id="descripcion"
-            name="descripcion"
+            id="description"
+            name="description"
             label="Descripción"
-            value={formData.descripcion}
+            value={formData.description}
             onChange={handleChange}
             rows={4}
           />

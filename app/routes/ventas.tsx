@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { getSales, addSale, deleteSale, type Sale, type NewSaleData } from '../../src/services/saleService';
+import { getSales, addSale, deleteSale, type Sale, type NewSaleData } from '../../src/services/firebase/saleService';
 import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import SaleForm from '../../src/components/ventas/SaleForm';

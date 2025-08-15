@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
-import { getSalesByDateRange } from '../../src/services/saleService';
-import type { Sale } from '../../src/services/saleService';
+import {getSalesByDateRange} from '../../src/services/firebase/saleService';
+import type { Sale } from '../../src/services/firebase/saleService';
+// import { getSalesByDateRange } from '../../src/services/saleService';
+// import type { Sale } from '../../src/services/saleService';
 import { generateSalesReportPdf } from '../../src/components/pdf/SalesReportPdf';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
