@@ -7,8 +7,10 @@ import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import ClientForm from '../../src/components/clientes/ClientForm';
 import { Table, TableContainer } from '../../src/components/ui/Table';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 function ClientesContent() {
+  const { showError } = useAlert();
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,8 +21,11 @@ function ClientesContent() {
       try {
         const clientsData = await getClients();
         setClients(clientsData);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error al cargar clientes: ", error);
+        const errorMessage = error.response?.data?.message || 'Error al cargar los clientes';
+        const errors = error.response?.data?.errors;
+        showError(errorMessage, 10000, errors);
       } finally {
         setIsLoading(false);
       }
@@ -72,8 +77,11 @@ function ClientesContent() {
         }]);
       }
       handleCloseModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al guardar el cliente: ", error);
+      const errorMessage = error.response?.data?.message || 'Error al guardar el cliente';
+      const errors = error.response?.data?.errors;
+      showError(errorMessage, 10000, errors);
     } finally {
       setIsLoading(false);
     }
@@ -85,8 +93,11 @@ function ClientesContent() {
       try {
         await deleteClient(id);
         setClients(clients.filter(c => c.id !== id));
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error al eliminar el cliente: ", error);
+        const errorMessage = error.response?.data?.message || 'Error al eliminar el cliente';
+        const errors = error.response?.data?.errors;
+        showError(errorMessage, 10000, errors);
       } finally {
         setIsLoading(false);
       }

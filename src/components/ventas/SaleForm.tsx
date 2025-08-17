@@ -210,7 +210,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
         </div>
         <div className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {(['Efectivo', 'Yape', 'Lemon', 'Tarjeta'] as PaymentMethod[]).map((method) => (
+            {(['Efectivo', 'Tarjeta','Yape', 'Plin', 'Lemon'] as PaymentMethod[]).map((method) => (
               <label key={method} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                 <input
                   type="radio"
@@ -415,7 +415,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
                           +
                         </button>
                       </div>
-                      <div className="w-auto text-right border">
+                      <div className="w-auto text-right">
                         <p className="text-sm font-medium">S/{(item.cantidad * item.precioUnitario).toFixed(2)}</p>
                         <p className="text-xs text-gray-500">S/{item.precioUnitario.toFixed(2)} c/u</p>
                       </div>

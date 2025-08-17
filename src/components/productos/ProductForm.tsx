@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Product } from '../../services/firebase/productService';
+import type { Product } from '../../services/productService';
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 
@@ -11,19 +11,21 @@ interface ProductFormProps {
 }
 
 interface FormData {
-  nombre: string;
-  descripcion: string;
-  precioCosto: number;
-  precioVenta: number;
+  name: string;
+  description: string;
+  price_cost: number;
+  sale_price: number;
   stock: number | null;
-  hasUnlimitedStock: boolean;
+  sku: string;
+  has_un_limited_stock: 1 | 0;
+  is_active: boolean;
 }
 
 interface FormErrors {
-  nombre?: string;
-  descripcion?: string;
-  precioCosto?: string;
-  precioVenta?: string;
+  name?: string;
+  description?: string;
+  price_cost?: string;
+  sale_price?: string;
   stock?: string;
 }
 
@@ -31,12 +33,14 @@ const MAX_DESCRIPTION_LENGTH = 500;
 
 const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, isSubmitting = false }) => {
   const [formData, setFormData] = useState<FormData>({
-    nombre: '',
-    descripcion: '',
-    precioCosto: 0,
-    precioVenta: 0,
+    name: '',
+    description: '',
+    price_cost: 0,
+    sale_price: 0,
     stock: 0,
-    hasUnlimitedStock: false,
+    sku: '',
+    has_un_limited_stock: 0,
+    is_active: false,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -47,12 +51,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
       const hasUnlimitedStock = product.stock === null;
       setFormData(prev => ({
         ...prev,
-        nombre: product.nombre,
-        descripcion: product.descripcion,
-        precioCosto: product.precioCosto,
-        precioVenta: product.precioVenta,
+        name: product.name,
+        description: product.description,
+        price_cost: product.price_cost,
+        sale_price: product.sale_price,
         stock: hasUnlimitedStock ? 0 : product.stock,
-        hasUnlimitedStock,
+        has_un_limited_stock: hasUnlimitedStock ? 1 : 0,
       }));
     }
   }, [product]);
@@ -61,18 +65,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.nombre.trim()) {
-      newErrors.nombre = 'El nombre del producto es requerido';
+    if (!formData.name.trim()) {
+      newErrors.name = 'El nombre del producto es requerido';
     }
 
-    if (formData.precioCosto <= 0) {
-      newErrors.precioCosto = 'El precio de costo debe ser mayor a 0';
+    if (formData.price_cost <= 0) {
+      newErrors.price_cost = 'El precio de costo debe ser mayor a 0';
     }
 
-    if (formData.precioVenta <= 0) {
-      newErrors.precioVenta = 'El precio de venta debe ser mayor a 0';
-    } else if (formData.precioVenta < formData.precioCosto) {
-      newErrors.precioVenta = 'El precio de venta no puede ser menor al costo';
+    if (formData.sale_price <= 0) {
+      newErrors.sale_price = 'El precio de venta debe ser mayor a 0';
+    } else if (formData.sale_price < formData.price_cost) {
+      newErrors.sale_price = 'El precio de venta no puede ser menor al costo';
     }
 
     if (formData.stock !== null && formData.stock < 0) {
@@ -87,17 +91,17 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
     e.preventDefault();
 
     if (validateForm()) {
-      onSubmit(formData);
+      onSubmit(formData as unknown as Omit<Product, 'id'>);
     }
   };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
 
-    if (name === 'hasUnlimitedStock') {
+    if (name === 'has_un_limited_stock') {
       const isChecked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({
         ...prev,
-        hasUnlimitedStock: isChecked,
+        has_un_limited_stock: isChecked ? 1 : 0,
         stock: isChecked ? null : (prev.stock || 0),
       }));
       return;
@@ -105,7 +109,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
 
     setFormData(prev => ({
       ...prev,
-      [name]: name.includes('precio') || name === 'stock'
+      [name]: name.includes('precio')
         ? parseFloat(value) || 0
         : value,
     }));
@@ -117,13 +121,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
         {/* Product Name */}
         <div>
           <Input
-            id="nombre"
-            name="nombre"
+            id="name"
+            name="name"
             label="Nombre del Producto *"
-            value={formData.nombre}
+            value={formData.name}
             onChange={handleChange}
             placeholder="Ej: Ramo de Rosas Rojas"
-            error={errors.nombre}
+            error={errors.name}
             required
           />
         </div>
@@ -132,16 +136,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
         <div>
           <Input
             as="textarea"
-            id="descripcion"
-            name="descripcion"
+            id="description"
+            name="description"
             label="Descripción"
             placeholder="Describe el producto en detalle..."
-            value={formData.descripcion}
+            value={formData.description}
             onChange={handleChange}
             rows={4}
           />
-          {errors.descripcion && (
-            <p className="mt-2 text-sm text-red-600">{errors.descripcion}</p>
+          {errors.description && (
+            <p className="mt-2 text-sm text-red-600">{errors.description}</p>
           )}
         </div>
 
@@ -150,59 +154,59 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
           <div>
             <Input
               type="number"
-              id="precioCosto"
-              name="precioCosto"
+              id="price_cost"
+              name="price_cost"
               label="Precio de Costo *"
-              value={formData.precioCosto || ''}
+              value={formData.price_cost || 0}
               onChange={handleChange}
               placeholder="0.00"
               step="0.01"
-              error={errors.precioCosto}
+              error={errors.price_cost}
               required
             />
           </div>
           <div>
             <Input
               type="number"
-              id="precioVenta"
-              name="precioVenta"
+              id="sale_price"
+              name="sale_price"
               label="Precio de Venta *"
-              value={formData.precioVenta || ''}
+              value={formData.sale_price || 0}
               onChange={handleChange}
               placeholder="0.00"
               min="0"
               step="0.01"
-              error={errors.precioVenta}
+              error={errors.sale_price}
               required
             />
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2 justify-between w-full">          
+        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2 justify-between w-full">
           {(
             <Input
               type="number"
               id="stock"
               name="stock"
-              label="Stock Inicial *"
-              value={formData.stock || ''}
+              label="Stock Inicial"
+              value={formData.stock || 0}
               onChange={handleChange}
               min="0"
               step="1"
               error={errors.stock}
               required
-              disabled={formData.hasUnlimitedStock}
+              disabled={formData.has_un_limited_stock === 1}
             />
           )}
           <div className="flex md:items-center sm:pt-4">
-              <Checkbox
-                id="hasUnlimitedStock"
-                name="hasUnlimitedStock"
-                checked={formData.hasUnlimitedStock}
-                onChange={handleChange}
-                label="Stock Ilimitado (no se agota)"
-                labelClassName="text-sm text-gray-700"
-                containerClassName="flex items-center"
-              />
+            <Checkbox
+              id="has_un_limited_stock"
+              name="has_un_limited_stock"
+              checked={formData.has_un_limited_stock === 1}
+              onChange={handleChange}
+              label="Stock ilimitado (no se agota)"
+              labelClassName="text-sm text-gray-700"
+              containerClassName="flex items-center"
+            />
           </div>
         </div>
       </div>

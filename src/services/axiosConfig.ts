@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { userService } from './userService';
+import { ROUTES } from '../routes/paths';
 
 // ✅ Usa Vite para acceder a variables de entorno
 const api = axios.create({
@@ -29,7 +30,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       console.warn('Token expirado o no autorizado. Cerrando sesión...');
       userService.logout();
-      window.location.href = '/login'; // Redirecciona al login
+      window.location.href = ROUTES.LOGIN;
     }
 
     // Puedes manejar otros códigos de error aquí si quieres

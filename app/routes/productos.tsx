@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { getProducts, addProduct, updateProduct, deleteProduct, type Product } from '../../src/services/firebase/productService';
-import Loader from '../../src/components/ui/Loader';
+import { getProducts, addProduct, updateProduct, deleteProduct, type Product } from '../../src/services/productService';
 import Modal from '../../src/components/ui/Modal';
 import ProductForm from '../../src/components/productos/ProductForm';
 import { Table, TableContainer } from '../../src/components/ui/Table';
+import { useAlert } from '../../src/contexts/AlertContext';
+import Loader from '../../src/components/ui/Loader';
 
 function ProductosContent() {
+  const { showError } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,8 +21,11 @@ function ProductosContent() {
       try {
         const productsData = await getProducts();
         setProducts(productsData);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error al cargar productos: ", error);
+        const errorMessage = error.response?.data?.message || 'Error al cargar los productos';
+        const errors = error.response?.data?.errors;
+        showError(errorMessage, 10000, errors);
       } finally {
         setIsLoading(false);
       }
@@ -38,19 +43,22 @@ function ProductosContent() {
     setCurrentProduct(null);
   };
 
-  const handleSaveProduct = async (formData: Omit<Product, 'id'>) => {
+  const handleSubmit = async (productData: Omit<Product, 'id'>) => {
     setIsLoading(true);
     try {
       if (currentProduct) {
-        await updateProduct(currentProduct.id, formData);
-        setProducts(products.map(p => p.id === currentProduct.id ? { ...p, ...formData } : p));
+        await updateProduct(currentProduct.id, productData);
       } else {
-        const newId = await addProduct(formData);
-        setProducts([...products, { id: newId, ...formData }]);
+        await addProduct(productData);
       }
-      handleCloseModal();
-    } catch (error) {
-      console.error("Error al guardar el producto: ", error);
+      const productsData = await getProducts();
+      setProducts(productsData);
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Error al guardar el producto:', error);
+      const errorMessage = error.response?.data?.message || 'Error al guardar el producto';
+      const errors = error.response?.data?.errors;
+      showError(errorMessage, 10000, errors);
     } finally {
       setIsLoading(false);
     }
@@ -61,9 +69,12 @@ function ProductosContent() {
       setIsLoading(true);
       try {
         await deleteProduct(id);
-        setProducts(products.filter(p => p.id !== id));
-      } catch (error) {
-        console.error("Error al eliminar el producto: ", error);
+        setProducts(products.filter(product => product.id !== id));
+      } catch (error: any) {
+        console.error('Error al eliminar el producto:', error);
+        const errorMessage = error.response?.data?.message || 'Error al eliminar el producto';
+        const errors = error.response?.data?.errors;
+        showError(errorMessage, 10000, errors);
       } finally {
         setIsLoading(false);
       }
@@ -87,17 +98,13 @@ function ProductosContent() {
         disabled={isLoading}
       >
         {isLoading ? (
-          <>
-            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Procesando...
-          </>
-        ) : currentProduct ? (
-          'Actualizar Producto'
+          <Loader />
         ) : (
-          'Guardar Producto'
+          currentProduct ? (
+            'Actualizar Producto'
+          ) : (
+            'Guardar Producto'
+          )
         )}
       </button>
     </div>
@@ -128,26 +135,26 @@ function ProductosContent() {
           <Table
             columns={[
               {
-                key: 'nombre',
+                key: 'name',
                 header: 'Nombre',
                 className: 'font-medium text-gray-900'
               },
               {
-                key: 'descripcion',
+                key: 'description',
                 header: 'Descripción',
                 className: 'text-gray-500 max-w-[200px] overflow-hidden text-ellipsis'
               },
               {
-                key: 'precioCosto',
+                key: 'price_cost',
                 header: 'Precio Costo',
                 className: 'text-gray-500',
-                render: (product) => `${product.precioCosto?.toFixed(2) || '0.00'}`
+                render: (product) => `${product.price_cost || '0.00'}`
               },
               {
-                key: 'precioVenta',
+                key: 'sale_price',
                 header: 'Precio Venta',
                 className: 'text-gray-500',
-                render: (product) => `${product.precioVenta?.toFixed(2) || '0.00'}`
+                render: (product) => `${product.sale_price || '0.00'}`
               },
               {
                 key: 'stock',
@@ -206,7 +213,7 @@ function ProductosContent() {
       >
         <ProductForm 
           product={currentProduct} 
-          onSubmit={handleSaveProduct} 
+          onSubmit={handleSubmit} 
           onClose={handleCloseModal}
           isSubmitting={isLoading}
         />

@@ -36,7 +36,7 @@ export interface Sale {
 }
 
 // Datos necesarios para crear una nueva venta
-export type PaymentMethod = 'Efectivo' | 'Tarjeta' | 'Yape' | 'Lemon';
+export type PaymentMethod = 'Efectivo' | 'Tarjeta' | 'Yape' | 'Plin' | 'Lemon';
 
 export interface NewSaleData {
   clienteId: string | null;
