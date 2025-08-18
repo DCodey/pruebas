@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import type { NewSaleData, SaleItem, PaymentMethod } from '../../services/firebase/saleService';
-import { getClients, type Client } from '../../services/firebase/clientService';
-import { getProducts, type Product } from '../../services/firebase/productService';
+import type { SaleItem, PaymentMethod, NewSaleData } from '../../services/saleService';
+import { getClients, type Client } from '../../services/clientService';
+import { getProducts, type Product } from '../../services/productService';
 import { 
-  getCurrentDateUTC, 
-  formatForDateInput,
   updateDateKeepingTime,
+  toUTC5,
 } from '../../utils/dateUtils';
 import Input from '../ui/Input';
 import { TrashIcon } from '@heroicons/react/24/outline';
@@ -23,7 +22,6 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   // Datos de la BD
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [fechaDeVenta, setFechaDeVenta] = useState<Date>(getCurrentDateUTC());
   
   // Estado de la venta actual
   const [selectedClientId, setSelectedClientId] = useState<string>('');
@@ -31,6 +29,11 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [total, setTotal] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Efectivo');
+  const [fechaDeVenta, setFechaDeVenta] = useState<Date>(new Date());
+  const [sale_date, setSaleDate] = useState<string>(() => {
+    const now = new Date();
+    return now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  });
 
   // Campos para producto personalizado
   const [customProductName, setCustomProductName] = useState('');
@@ -52,24 +55,29 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   }, []);
 
   useEffect(() => {
-    const newTotal = saleItems.reduce((sum, item) => sum + item.precioUnitario * item.cantidad, 0);
+    const newTotal = saleItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     setTotal(newTotal);
   }, [saleItems]);
 
   const handleAddRegisteredProduct = (productId: string) => {
+
     if (!productId) return;
-    const product = products.find(p => p.id === productId);
+    const product = products.find(p => p.id.toString() === productId);
     if (!product) return;
 
-    const existingItemIndex = saleItems.findIndex(item => item.productId === productId);
+    const existingItemIndex = saleItems.findIndex(item => 
+      item.product_id && item.product_id === Number(productId)
+    );
+    
     if (existingItemIndex > -1) {
-      updateItemQuantity(existingItemIndex, saleItems[existingItemIndex].cantidad + 1);
+      updateItemQuantity(existingItemIndex, saleItems[existingItemIndex].quantity + 1);
     } else {
       const newItem: SaleItem = {
-        productId: product.id,
-        nombre: product.nombre,
-        cantidad: 1,
-        precioUnitario: product.precioVenta,
+        product_id: Number(product.id),
+        product_name: product.name,
+        quantity: 1,
+        price: product.sale_price,
+        subtotal: product.sale_price,
       };
       setSaleItems([...saleItems, newItem]);
     }
@@ -81,10 +89,11 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
       return;
     }
     const newItem: SaleItem = {
-      productId: null,
-      nombre: customProductName,
-      cantidad: 1,
-      precioUnitario: customProductPrice,
+      product_id: null,
+      product_name: customProductName,
+      quantity: 1,
+      price: customProductPrice,
+      subtotal: customProductPrice,
     };
     setSaleItems([...saleItems, newItem]);
     // Limpiar campos
@@ -95,17 +104,17 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   const updateItemQuantity = (index: number, quantity: number) => {
     const item = saleItems[index];
     // Si es un producto registrado, verificar stock
-    if (item.productId) {
-      const product = products.find(p => p.id === item.productId);
+    if (item.product_id) {
+      const product = products.find(p => p.id === item.product_id);
       if (product) {
         // Verificar stock solo si no es un producto con stock ilimitado (null) y no está agotado (stock > 0)
         if (product.stock !== null && product.stock > 0 && quantity > product.stock) {
-          alert(`Stock insuficiente para ${product.nombre}. Disponible: ${product.stock}`);
+          alert(`Stock insuficiente para ${product.name}. Disponible: ${product.stock}`);
           return;
         }
         // Mostrar advertencia si el producto está agotado
         if (product.stock === 0) {
-          const confirmar = window.confirm(`Advertencia: ${product.nombre} está marcado como agotado. ¿Desea continuar de todos modos?`);
+          const confirmar = window.confirm(`Advertencia: ${product.name} está marcado como agotado. ¿Desea continuar de todos modos?`);
           if (!confirmar) return;
         }
       }
@@ -115,24 +124,36 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
     if (quantity <= 0) {
       newItems.splice(index, 1); // Eliminar el item
     } else {
-      newItems[index] = { ...item, cantidad: quantity };
+      newItems[index] = { ...item, quantity: quantity };
     }
     setSaleItems(newItems);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const saleData: NewSaleData = {
-      clienteId: clientType === 'registered' ? selectedClientId : null,
-      nombreCliente: clientType === 'registered' 
-        ? clients.find(c => c.id === selectedClientId)?.nombre || 'Error'
-        : anonymousClientName.trim() || 'Anónimo',
-      items: saleItems,
-      total,
-      paymentMethod,
-      fechaDeVenta: fechaDeVenta,
+    const client = clientType === 'registered' 
+      ? clients.find(c => c.id === selectedClientId)
+      : null;
+
+    // Format items to match the expected payload
+    const formattedItems = saleItems.map(item => ({
+      product_id: item.product_id || null,
+      product_name: item.product_name || null,
+      price: item.price,
+      quantity: item.quantity,
+      subtotal: item.price * item.quantity
+    }));
+
+    const saleData = {
+      client_id: client ? Number(client.id) : null,
+      client_name: client?.name || anonymousClientName.trim() || 'Anónimo',
+      items: formattedItems,
+      total: formattedItems.reduce((sum, item) => sum + item.subtotal, 0),
+      payment_method: paymentMethod,
+      // Use the selected date and time from the state
+      sale_date: toUTC5(fechaDeVenta || new Date()).toISOString().slice(0, 19).replace('T', ' '),
     };
-    onSubmit(saleData);
+    onSubmit(saleData as NewSaleData);
   };
 
   return (
@@ -183,7 +204,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
                 {clients.length === 0 && <option value="">No hay clientes registrados</option>}
                 {clients.map(client => (
                   <option key={client.id} value={client.id}>
-                    {client.nombre}
+                    {client.name}
                   </option>
                 ))}
               </select>
@@ -288,7 +309,8 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
                       disabled={p.stock === 0}
                       className={p.stock === 0 ? 'text-red-500' : ''}
                     >
-                      {p.nombre} - {stockText} - S/{p.precioVenta.toFixed(2)}
+                      {p.name} - {stockText} - S/{p.sale_price}
+                      
                     </option>
                   );
                 })}
@@ -340,11 +362,13 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
           <div className="flex items-center text-sm">
               <input 
                 type="date" 
-                value={formatForDateInput(fechaDeVenta)} 
+                value={sale_date}
                 onChange={(e) => {
-                  // Actualizar solo la fecha, manteniendo la hora actual
-                  const newDate = updateDateKeepingTime(fechaDeVenta, e.target.value);
-                  setFechaDeVenta(newDate);
+                  const newDate = e.target.value;
+                  setSaleDate(newDate);
+                  // Update only the date part, keeping the original time
+                  const updatedDate = updateDateKeepingTime(fechaDeVenta, newDate);
+                  setFechaDeVenta(updatedDate);
                 }} 
                 className="block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-2 px-3 border"
               />
@@ -360,11 +384,11 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
             <>            
               <div className="divide-y divide-gray-200">
                 {saleItems.map((item, index) => (
-                  <div key={item.productId || `${item.nombre}-${index}`} className="py-3 flex items-center justify-between">
+                  <div key={item.product_id || `${item.product_name}-${index}`} className="py-3 flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{item.nombre}</p>
-                      {item.productId && (() => {
-                        const product = products.find(p => p.id === item.productId);
+                      <p className="text-sm font-medium text-gray-900 truncate">{item.product_name}</p>
+                      {item.product_id && (() => {
+                        const product = products.find(p => p.id === item.product_id);
                         if (!product) return null;
                         
                         let stockText = '';
@@ -395,29 +419,29 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
                       <div className="flex items-center border rounded-md">
                         <button
                           type="button"
-                          onClick={() => updateItemQuantity(index, Math.max(1, item.cantidad - 1))}
+                          onClick={() => updateItemQuantity(index, Math.max(1, item.quantity - 1))}
                           className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-l-md"
                         >
                           -
                         </button>
                         <input
                           type="number"
-                          value={item.cantidad}
+                          value={item.quantity}
                           min="1"
                           onChange={e => updateItemQuantity(index, parseInt(e.target.value, 10) || 1)}
                           className="sm:w-12 w-8 text-center border-0 focus:ring-0"
                         />
                         <button
                           type="button"
-                          onClick={() => updateItemQuantity(index, item.cantidad + 1)}
+                          onClick={() => updateItemQuantity(index, item.quantity + 1)}
                           className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-r-md"
                         >
                           +
                         </button>
                       </div>
                       <div className="w-auto text-right">
-                        <p className="text-sm font-medium">S/{(item.cantidad * item.precioUnitario).toFixed(2)}</p>
-                        <p className="text-xs text-gray-500">S/{item.precioUnitario.toFixed(2)} c/u</p>
+                        <p className="text-sm font-medium">S/{(item.quantity * item.price).toFixed(2)}</p>
+                        <p className="text-xs text-gray-500">S/{Number(item.price).toFixed(2)} c/u</p>
                       </div>
                       <button
                         type="button"

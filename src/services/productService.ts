@@ -1,7 +1,7 @@
 import api from './axiosConfig';
 
 export interface Product {
-    id: string;
+    id: number;
     name: string;
     description: string;
     price_cost: number;
@@ -19,7 +19,7 @@ export const getProducts = async (): Promise<Product[]> => {
 };
 
 // ✅ Añadir un nuevo producto
-export const addProduct = async (productData: Omit<Product, 'id'>): Promise<string> => {
+export const addProduct = async (productData: Omit<Product, 'id'>): Promise<number> => {
     const response = await api.post<{ success: boolean; data: Product }>('/products', {
         name: productData.name,
         description: productData.description,
@@ -36,7 +36,7 @@ export const addProduct = async (productData: Omit<Product, 'id'>): Promise<stri
 
 // ✅ Actualizar un producto existente
 export const updateProduct = async (
-    id: string,
+    id: number,
     productData: Partial<Omit<Product, 'id'>>
 ): Promise<void> => {
     const updateData: Partial<Product> = {};
@@ -53,6 +53,6 @@ export const updateProduct = async (
 };
 
 // ✅ Eliminar un producto
-export const deleteProduct = async (id: string): Promise<void> => {
+export const deleteProduct = async (id: number): Promise<void> => {
     await api.delete(`/products/${id}`);
 };
