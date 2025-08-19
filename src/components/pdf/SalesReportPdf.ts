@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import type { Sale } from '../../services/firebase/saleService';
+import type { Sale } from '../../services/saleService';
 import { autoTable } from 'jspdf-autotable';
 
 interface SalesReportPdfProps {
@@ -41,7 +41,7 @@ export const generateSalesReportPdf = ({
   // Resumen de ventas
   doc.setFontSize(11);
   doc.text(`Total de ventas: ${totalSales}`, 14, 45);
-  doc.text(`Monto total: S/ ${totalAmount.toFixed(2)}`, 14, 55);
+  doc.text(`Monto total: S/ ${Number(totalAmount).toFixed(2)}`, 14, 55);
   
   // Configuración de la tabla
   const tableColumn = ["Fecha", "Cliente", "Productos", "Total"];
@@ -50,10 +50,10 @@ export const generateSalesReportPdf = ({
   // Procesar datos para la tabla
   sales.forEach(sale => {
     const saleData = [
-      sale.fechaDeVenta.toDate().toLocaleDateString(),
-      sale.nombreCliente || 'Cliente no registrado',
-      sale.items.map(item => `${item.cantidad}x ${item.nombre}`).join(', '),
-      `S/ ${sale.total.toFixed(2)}`
+      sale.sale_date,
+      sale.client_name || 'Cliente no registrado',
+      sale.items.map(item => `${item.quantity}x ${item.product_name}`).join(', '),
+      `S/ ${Number(sale.total).toFixed(2)}`
     ];
     tableRows.push(saleData);
   });
