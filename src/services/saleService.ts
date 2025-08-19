@@ -69,3 +69,9 @@ export const getSaleById = async (saleId: number): Promise<Sale> => {
     const response = await api.get<{ success: boolean; data: Sale }>(`/sales/${saleId}`);
     return response.data.data;
 };
+
+
+export const getSalesByDateRange = async (startDate: string, endDate: string): Promise<Sale[]> => {
+    const response = await api.get<{ success: boolean; data: Sale[] }>(`/sales?startDate=${startDate}&endDate=${endDate}`);
+    return response.data.data;
+};

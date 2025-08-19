@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
-import {getSalesByDateRange} from '../../src/services/firebase/saleService';
-import type { Sale } from '../../src/services/firebase/saleService';
-// import { getSalesByDateRange } from '../../src/services/saleService';
-// import type { Sale } from '../../src/services/saleService';
+import {getSalesByDateRange, type Sale} from '../../src/services/saleService';
 import { generateSalesReportPdf } from '../../src/components/pdf/SalesReportPdf';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -27,7 +24,7 @@ export function Resumen() {
     const fetchSales = async () => {
       setLoading(true);
       try {
-        const salesData = await getSalesByDateRange(startDate, endDate);
+        const salesData = await getSalesByDateRange(startDate.toISOString(), endDate.toISOString());
         setSales(salesData);
       } catch (error) {
         console.error("Error al obtener las ventas:", error);
@@ -57,7 +54,8 @@ export function Resumen() {
     setEndDate(end);
   };
 
-  const totalSales = sales.reduce((sum, sale) => sum + sale.total, 0);
+  const totalSales = sales.reduce((sum, sale) => sum + parseFloat(String(sale.total)), 0);
+
   const numberOfSales = sales.length;
 
   const handleExportPdf = () => {
@@ -134,7 +132,7 @@ export function Resumen() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-300">
             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total de Ventas</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">S/{totalSales.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-2">S/{Number(totalSales).toFixed(2) }</p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-300">
             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Cantidad de Ventas</h3>
@@ -154,13 +152,13 @@ export function Resumen() {
                   key: 'fecha',
                   header: 'Fecha',
                   className: 'text-gray-600',
-                  render: (sale) => new Date(sale.fechaDeVenta.seconds * 1000).toLocaleString()
+                  render: (sale) => new Date(sale.sale_date).toLocaleString()
                 },
                 {
                   key: 'cliente',
                   header: 'Cliente',
                   className: 'font-medium text-gray-900',
-                  render: (sale) => sale.nombreCliente
+                  render: (sale) => sale.client_name
                 },
                 {
                   key: 'productos',
@@ -168,7 +166,7 @@ export function Resumen() {
                   className: 'text-gray-800 font-mono max-w-[200px] md:max-w-[300px]',
                   render: (sale) => (
                     <div className="overflow-hidden text-ellipsis">
-                      {sale.items.map(item => item.nombre).join(', ')}
+                      {sale.items.map(item => item.product_name).join(', ')}
                     </div>
                   )
                 },
@@ -176,7 +174,7 @@ export function Resumen() {
                   key: 'total',
                   header: 'Total',
                   className: 'text-gray-800 font-mono',
-                  render: (sale) => `S/${sale.total.toFixed(2)}`
+                  render: (sale) => `S/${sale.total}`
                 }
               ]}
               data={sales}
