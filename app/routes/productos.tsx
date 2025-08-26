@@ -231,8 +231,8 @@ function ProductosContent() {
 
        <ConfirmDelete
         open={showDeleteConfirm}
-        title="Eliminar cliente"
-        message="¿Estás seguro de eliminar este cliente?"
+        title="Eliminar Producto"
+        message="¿Estás seguro de eliminar este producto?"
         confirmText="Eliminar"
         cancelText="Cancelar"
         onConfirm={confirmDelete}
