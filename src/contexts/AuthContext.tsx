@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { userService } from '../services/userService';
 
 interface AuthContextType {
@@ -20,6 +20,14 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Sincronizar estado con localStorage al cargar la app
+  useEffect(() => {
+    const user = userService.getCurrentUser();
+    setCurrentUser(user);
+    setLoading(false);
+  }, []);
 
   const signup = (email: string, password: string) =>{
     //por ahora no hace nada
@@ -49,6 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout
   };
 
+  if (loading) {
+    return null;
+  }
   return (
     <AuthContext.Provider value={value}>
       {children}

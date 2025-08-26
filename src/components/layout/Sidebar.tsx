@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeftStartOnRectangleIcon } from '@heroicons/react/24/outline';
 import { ROUTES } from '../../routes/paths';
+import { company } from '../../utils/constants';
 
 
 const navigation = [
@@ -43,7 +44,7 @@ export function Sidebar({ isOpen, onToggle, onLogout }: SidebarProps) {
                 <div className="flex-1 flex flex-col border-2 border-gray-100 md:m-2 bg-secondary-50 shadow-lg md:rounded-2xl h-screen">
                     {/* Header del Sidebar con botón de cerrar en móvil */}
                     <div className="flex items-center justify-between border-b px-4 py-3">
-                        <h1 className="text-primary-800 text-xl font-bold">🌸Florería La Fontana</h1>
+                        <h1 className="text-primary-800 text-xl font-bold">🌸{company.name}</h1>
                         <button
                             onClick={onToggle}
                             className="md:hidden text-gray-500 hover:text-gray-700 pl-2 rounded-full bg-secondary-50"

@@ -20,8 +20,8 @@ type TableProps<T> = {
 };
 
 export function Table<T>({
-  columns,
-  data,
+  columns = [],
+  data = [],
   keyExtractor,
   emptyMessage = 'No hay datos disponibles',
   className = '',

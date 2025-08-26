@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
-import { PlusIcon, PencilIcon, TrashIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, CreditCardIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
+import PaymentHistoryModal from '../../src/components/servicios-especiales/PaymentHistoryModal';
 import { 
   getSpecialServices, 
-  createSpecialService, 
+  addSpecialService, 
   updateSpecialService, 
-  type SpecialService, 
   deleteDefinitiveSpecialService
-} from '../../src/services/firebase/specialService';
+} from '../../src/services/specialService';
+import type { 
+  SpecialService,
+  NewSpecialServiceData 
+} from '../../src/services/specialService';
+import type { Client as ClientType } from '../../src/services/clientService';
 import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import SpecialServiceForm from '../../src/components/servicios-especiales/SpecialServiceForm';
@@ -23,11 +28,12 @@ function ServiciosEspecialesContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [currentService, setCurrentService] = useState<SpecialService | null>(null);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   const fetchServices = async () => {
     try {
       setIsLoading(true);
-      const servicesData = await getSpecialServices(true);
+      const servicesData = await getSpecialServices();
       setServices(servicesData);
     } catch (error) {
       console.error("Error al cargar servicios especiales: ", error);
@@ -41,8 +47,13 @@ function ServiciosEspecialesContent() {
   }, []);
 
   const handleOpenModal = (service: SpecialService | null = null) => {
-    setCurrentService(service);
+    if (service) {
+      setCurrentService(service);
+    } else {
+      setCurrentService(null);
+    }
     setIsModalOpen(true);
+    setIsPaymentModalOpen(false);
   };
 
   const handleCloseModal = () => {
@@ -54,15 +65,35 @@ function ServiciosEspecialesContent() {
     fetchServices(); // Refresh the services list
   };
 
-  const handleSaveService = async (formData: Omit<SpecialService, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSaveService = async (formData: NewSpecialServiceData) => {
     try {
+      if (!formData.client_id) {
+        throw new Error('Se requiere un cliente válido');
+      }
+
       setIsLoading(true);
+      const serviceData: NewSpecialServiceData = {
+        client_id: formData.client_id,
+        name: formData.name,
+        deceased_name: formData.deceased_name,
+        description: formData.description,
+        price: formData.price,
+        is_active: formData.is_active,
+        is_paid: formData.is_paid,
+        sector: formData.sector,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        recurrence_interval: formData.recurrence_interval,
+        day_of_week: formData.day_of_week,
+        day_of_month: formData.day_of_month
+      };
+
       if (currentService) {
-        await updateSpecialService(currentService.id, formData);
-        setServices(services.map(s => s.id === currentService.id ? { ...s, ...formData } : s));
+        const updatedService = await updateSpecialService(currentService.id, serviceData);
+        setServices(services.map(s => s.id === currentService.id ? updatedService : s));
       } else {
-        const newId = await createSpecialService(formData);
-        setServices([...services, { id: newId, ...formData, createdAt: new Date(), updatedAt: new Date() }]);
+        const newService = await addSpecialService(serviceData);
+        setServices([...services, newService]);
       }
       handleCloseModal();
     } catch (error) {
@@ -72,10 +103,10 @@ function ServiciosEspecialesContent() {
     }
   };
 
-  const handleDelete = async (id: string) => {    
+  const handleDelete = async (id: number) => {    
     try {
       setIsLoading(true);
-      await deleteDefinitiveSpecialService(id);
+      await deleteDefinitiveSpecialService(Number(id));
       setServices(services.filter(s => s.id !== id));
     } catch (error) {
       console.error("Error al eliminar el servicio especial: ", error);
@@ -105,7 +136,6 @@ function ServiciosEspecialesContent() {
     </div>
   );
 
-
   return (
     <>
       <PageLayout
@@ -131,10 +161,10 @@ function ServiciosEspecialesContent() {
                 {
                   key: 'clientName',
                   header: 'Cliente',
-                  className: 'font-medium text-gray-900',
+                  className: 'text-gray-500',
                   render: (service) => (
                     <div>
-                      <div className="font-medium">{service.clientName || 'Sin cliente'}</div>
+                      <div className="font-medium">{service.client.name || 'Sin cliente'}</div>
                     </div>
                   )
                 },
@@ -143,7 +173,7 @@ function ServiciosEspecialesContent() {
                   header: 'Difunto',
                   render: (service) => (
                     <div>
-                      <div className="font-medium text-gray-900">{service.deceasedName}</div>
+                      <div className="font-medium text-gray-900">{service.deceased_name}</div>
                     </div>
                   )
                 },
@@ -153,9 +183,17 @@ function ServiciosEspecialesContent() {
                   className: 'text-gray-500'
                 },
                 {
+                  key: 'description',
+                  header: 'Detalles',
+                  className: 'text-gray-500'
+                },
+                {
                   key: 'startDate',
                   header: 'Fecha de inicio',
-                  render: (service) => format(service.startDate, 'PPP', { locale: es }),
+                  render: (service) => {
+                    const startDate = typeof service.start_date === 'string' ? new Date(service.start_date) : service.start_date;
+                    return format(startDate, 'PPP', { locale: es });
+                  },
                   className: 'text-gray-500'
                 },
                 {
@@ -173,11 +211,11 @@ function ServiciosEspecialesContent() {
                   header: 'Estado',
                   render: (service: SpecialService) => (
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      service.isActive 
+                      service.is_active 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {service.isActive ? 'Activo' : 'Inactivo'}
+                      {service.is_active ? 'Activo' : 'Inactivo'}
                     </span>
                   ),
                   className: 'text-gray-500'
@@ -188,11 +226,11 @@ function ServiciosEspecialesContent() {
                   render: (service: SpecialService) => (
                       <div className="flex items-center">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          service.isPaid 
+                          service.is_paid 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                        {service.isPaid ? 'Pagado' : 'Pendiente de pago'}
+                        {service.is_paid ? 'Pagado' : 'Pendiente de pago'}
                         </span>                        
                       </div>
                     )
@@ -203,16 +241,26 @@ function ServiciosEspecialesContent() {
                   render: (service: SpecialService) => (
                     <div className="flex items-center space-x-2">
                       <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentService(service);
+                          setIsHistoryModalOpen(true);
+                        }}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        title="Ver historial de pagos"
+                      >
+                        <ClipboardDocumentCheckIcon className="-ml-1 mr-1 h-4 w-4" />Historial
+                      </button>
+                      <button
                         className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="Registrar pago"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setCurrentService(service);
-                          setIsPaymentModalOpen(true);
+                          setCurrentService(service)
+                          setIsPaymentModalOpen(true)
                         }}
                       >
-                        <CreditCardIcon className="-ml-1 mr-1 h-4 w-4" />
-                        {service.isPaid ? 'Modificar pago' : 'Registrar pago'}
+                        <CreditCardIcon className="-ml-1 mr-1 h-4 w-4" />Pagar
                       </button>
                     </div>
                   )
@@ -221,7 +269,7 @@ function ServiciosEspecialesContent() {
                   key: 'actions',
                   header: 'Acciones',
                   render: (service: SpecialService) => (
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-2">                      
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -251,7 +299,6 @@ function ServiciosEspecialesContent() {
               ]}
               data={services}
               keyExtractor={(service) => service.id}
-              onRowClick={handleOpenModal}
               emptyMessage="No hay servicios especiales registrados"
               rowClassName="hover:bg-gray-50 cursor-pointer"
             />
@@ -272,11 +319,28 @@ function ServiciosEspecialesContent() {
         />
       </Modal>
 
+      <PaymentHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        serviceId={currentService?.id || 0}
+        serviceName={currentService?.description || ''}
+        clientName={currentService?.client?.name || ''}
+        deceasedName={currentService?.deceased_name || ''}
+        price={currentService?.price || 0}
+        isPaid={currentService?.is_paid || false}
+      />
+
       <PaymentModal
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
-        serviceId={currentService?.id || ''}
-        serviceStartDate={currentService?.startDate}
+        serviceId={currentService?.id.toString() || ''}
+        serviceStartDate={
+          currentService?.start_date
+            ? typeof currentService.start_date === 'string'
+              ? new Date(currentService.start_date)
+              : currentService.start_date
+            : undefined
+        }
         onPaymentSuccess={handlePaymentSuccess}
       />
     </>
@@ -286,7 +350,7 @@ function ServiciosEspecialesContent() {
 export default function ServiciosEspeciales() {
   return (
     <DashboardLayout>
-      <ServiciosEspecialesContent/>
+      <p className="text-center text-2xl font-bold text-gray-500 h-screen flex items-center justify-center">En Mantenimiento 🛠️</p>
     </DashboardLayout>
   );
 }

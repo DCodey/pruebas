@@ -8,10 +8,13 @@ import ProductForm from '../../src/components/productos/ProductForm';
 import { Table, TableContainer } from '../../src/components/ui/Table';
 import { useAlert } from '../../src/contexts/AlertContext';
 import Loader from '../../src/components/ui/Loader';
+import ConfirmDelete from '../../src/components/ui/ConfirmDelete';
 
 function ProductosContent() {
-  const { showError } = useAlert();
+  const { showError, showSuccess } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
@@ -65,21 +68,28 @@ function ProductosContent() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+    setDeleteId(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+      if (!deleteId) return;
       setIsLoading(true);
       try {
-        await deleteProduct(id);
-        setProducts(products.filter(product => product.id !== id));
+        const { message } = await deleteProduct(Number(deleteId));
+        setProducts((Array.isArray(products) ? products : []).filter(c => c.id !== Number(deleteId)));
+        if (message) showSuccess(message);
       } catch (error: any) {
-        console.error('Error al eliminar el producto:', error);
-        const errorMessage = error.response?.data?.message || 'Error al eliminar el producto';
+        console.error("Error al eliminar el cliente: ", error);
+        const errorMessage = error.response?.data?.message || 'Error al eliminar el cliente';
         const errors = error.response?.data?.errors;
         showError(errorMessage, 10000, errors);
       } finally {
         setIsLoading(false);
+        setShowDeleteConfirm(false);
+        setDeleteId(null);
       }
-    }
-  };
+    };
 
   const modalFooter = (
     <div className="flex justify-end gap-x-3">
@@ -185,7 +195,7 @@ function ProductosContent() {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(product.id);
+                        handleDelete(product.id.toString());
                       }} 
                       className="text-red-600 hover:text-red-900"
                       title="Eliminar"
@@ -218,6 +228,21 @@ function ProductosContent() {
           isSubmitting={isLoading}
         />
       </Modal>
+
+       <ConfirmDelete
+        open={showDeleteConfirm}
+        title="Eliminar cliente"
+        message="¿Estás seguro de eliminar este cliente?"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => { setShowDeleteConfirm(false); setDeleteId(null); }}
+      />
+      {isLoading && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-30">
+          <Loader />
+        </div>
+      )}
     </PageLayout>
   );
 }

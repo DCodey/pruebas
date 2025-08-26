@@ -53,6 +53,7 @@ export const updateProduct = async (
 };
 
 // ✅ Eliminar un producto
-export const deleteProduct = async (id: number): Promise<void> => {
-    await api.delete(`/products/${id}`);
+export const deleteProduct = async (id: number): Promise<{ message?: string }> => {
+    const response = await api.delete(`/products/${id}`);
+    return { message: response.data?.message };
 };

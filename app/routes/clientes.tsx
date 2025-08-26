@@ -7,14 +7,17 @@ import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import ClientForm from '../../src/components/clientes/ClientForm';
 import { Table, TableContainer } from '../../src/components/ui/Table';
+import ConfirmDelete from '../../src/components/ui/ConfirmDelete';
 import { useAlert } from '../../src/contexts/AlertContext';
 
 function ClientesContent() {
-  const { showError } = useAlert();
+  const { showError, showSuccess } = useAlert();
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -65,13 +68,13 @@ function ClientesContent() {
     try {
       if (currentClient) {
         await updateClient(currentClient.id, formData);
-        setClients(clients.map(c => c.id === currentClient.id ? { 
+        setClients((Array.isArray(clients) ? clients : []).map(c => c.id === currentClient.id ? { 
           ...c, 
           ...formData
         } : c));
       } else {
         const newId = await addClient(formData);
-        setClients([...clients, { 
+        setClients([...(Array.isArray(clients) ? clients : []), { 
           id: newId, 
           ...formData
         }]);
@@ -88,19 +91,26 @@ function ClientesContent() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
-      setIsLoading(true);
-      try {
-        await deleteClient(id);
-        setClients(clients.filter(c => c.id !== id));
-      } catch (error: any) {
-        console.error("Error al eliminar el cliente: ", error);
-        const errorMessage = error.response?.data?.message || 'Error al eliminar el cliente';
-        const errors = error.response?.data?.errors;
-        showError(errorMessage, 10000, errors);
-      } finally {
-        setIsLoading(false);
-      }
+    setDeleteId(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setIsLoading(true);
+    try {
+      const { message } = await deleteClient(deleteId);
+      setClients((Array.isArray(clients) ? clients : []).filter(c => c.id !== deleteId));
+      if (message) showSuccess(message);
+    } catch (error: any) {
+      console.error("Error al eliminar el cliente: ", error);
+      const errorMessage = error.response?.data?.message || 'Error al eliminar el cliente';
+      const errors = error.response?.data?.errors;
+      showError(errorMessage, 10000, errors);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteConfirm(false);
+      setDeleteId(null);
     }
   };
   const modalFooter = (
@@ -213,6 +223,20 @@ function ClientesContent() {
           onClose={handleCloseModal}
         />
       </Modal>
+      <ConfirmDelete
+        open={showDeleteConfirm}
+        title="Eliminar cliente"
+        message="¿Estás seguro de eliminar este cliente?"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => { setShowDeleteConfirm(false); setDeleteId(null); }}
+      />
+      {isLoading && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-30">
+          <Loader />
+        </div>
+      )}
     </>
   );
 }
