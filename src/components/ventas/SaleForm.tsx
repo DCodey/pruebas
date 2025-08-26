@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { SaleItem, PaymentMethod, NewSaleData } from '../../services/saleService';
+import type { SaleItem, NewSaleData, PaymentMethod } from '../../services/saleService';
+import { PAYMENT_METHODS } from '../../utils/constants';
 import { getClients, type Client } from '../../services/clientService';
 import { getProducts, type Product } from '../../services/productService';
 import { 
@@ -231,17 +232,18 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
         </div>
         <div className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {(['Efectivo', 'Tarjeta','Yape', 'Plin', 'Lemon'] as PaymentMethod[]).map((method) => (
-              <label key={method} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+            {PAYMENT_METHODS.map((method) => (
+              <label key={method.value} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                 <input
                   type="radio"
                   name="paymentMethod"
-                  checked={paymentMethod === method}
-                  onChange={() => setPaymentMethod(method)}
+                  value={method.value}
+                  checked={paymentMethod === method.value}
+                  onChange={() => setPaymentMethod(method.value as PaymentMethod)}
                   className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
                 />
                 <span className="ml-2 text-sm font-medium text-gray-700 capitalize">
-                  {method}
+                  {method.label}
                 </span>
               </label>
             ))}

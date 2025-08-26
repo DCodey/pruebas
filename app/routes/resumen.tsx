@@ -54,9 +54,9 @@ export function Resumen() {
     setEndDate(end);
   };
 
-  const totalSales = sales.reduce((sum, sale) => sum + parseFloat(String(sale.total)), 0);
+  const totalSales = (Array.isArray(sales) ? sales : []).reduce((sum, sale) => sum + parseFloat(String(sale.total)), 0);
 
-  const numberOfSales = sales.length;
+  const numberOfSales = Array.isArray(sales) ? sales.length : 0;
 
   const handleExportPdf = () => {
     setIsGeneratingPdf(true);
@@ -84,8 +84,8 @@ export function Resumen() {
           <div className="">
             <button
               onClick={handleExportPdf}
-              disabled={isGeneratingPdf || sales.length === 0}
-              className={`flex items-center px-2 py-1 rounded-md text-white text-sm font-medium ${sales.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} transition-colors`}
+              disabled={isGeneratingPdf || !Array.isArray(sales) || sales.length === 0}
+              className={`flex items-center px-2 py-1 rounded-md text-white text-sm font-medium ${!Array.isArray(sales) || sales.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} transition-colors`}
             >
               <ArrowDownTrayIcon className="h-4 w-4 font-bold mr-1" />
               {isGeneratingPdf ? 'Generando...' : 'Descargar Reporte'}

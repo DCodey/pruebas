@@ -2,10 +2,8 @@ import React, { useRef } from 'react';
 import Modal from '../ui/Modal';
 import type { Sale } from '../../services/saleService';
 import html2canvas from 'html2canvas';
-import { ArrowTurnDownLeftIcon } from '@heroicons/react/24/outline';
-import { ArrowDownCircleIcon } from '@heroicons/react/16/solid';
-import { DocumentArrowUpIcon } from '@heroicons/react/24/solid';
 import { DocumentArrowDownIcon } from '@heroicons/react/24/solid';
+import { company } from 'src/utils/constants';
 
 interface SaleDetailsModalProps {
   isOpen: boolean;
@@ -150,8 +148,8 @@ const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sa
       <div ref={receiptRef} className="bg-gray-50 max-w-xs mx-auto p-6 font-mono print:p-0 print:shadow-none" style={{ WebkitPrintColorAdjust: 'exact' }}>
         {/* Header */}
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold">Amin Flowers</h2>
-          <p className="text-xs text-gray-600">Flores y regalos especiales</p>
+          <h2 className="text-xl font-bold">{company.name}</h2>
+          <p className="text-xs text-gray-600">{company.description}</p>
           <p className="text-xs mt-1">--------------------------------</p>
         </div>
         
@@ -212,7 +210,7 @@ const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sa
           <p>¡Gracias por su compra!</p>
           <p className="mt-1">*** Venta no reembolsable ***</p>
           <p className="mt-4 text-[10px]">
-            {new Date().getFullYear()} © Amin Flowers - Todos los derechos reservados
+          © {new Date().getFullYear()} {company.footer}
           </p>
         </div>       
       </div>

@@ -41,6 +41,8 @@ export const updateClient = async (
 };
 
 // ✅ Eliminar un cliente
-export const deleteClient = async (id: string): Promise<void> => {
-    await api.delete(`/clients/${id}`);
+export const deleteClient = async (id: string): Promise<{ message?: string }> => {
+    const response = await api.delete(`/clients/${id}`);
+    // Se asume que el backend responde con { success: true, message: '...' }
+    return { message: response.data?.message };
 };

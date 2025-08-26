@@ -47,15 +47,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
 
   // Initialize form data when product changes
   useEffect(() => {
-    if (product) {
-      const hasUnlimitedStock = product.stock === null;
+    if (product) {      
+      const hasUnlimitedStock = Number(product.has_un_limited_stock) === 1;
       setFormData(prev => ({
         ...prev,
         name: product.name,
         description: product.description,
         price_cost: product.price_cost,
         sale_price: product.sale_price,
-        stock: hasUnlimitedStock ? 0 : product.stock,
+        stock: hasUnlimitedStock ? null : product.stock,
         has_un_limited_stock: hasUnlimitedStock ? 1 : 0,
       }));
     }
@@ -69,13 +69,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
       newErrors.name = 'El nombre del producto es requerido';
     }
 
-    if (formData.price_cost <= 0) {
+    if (Number(formData.price_cost) <= 0) {
       newErrors.price_cost = 'El precio de costo debe ser mayor a 0';
     }
 
-    if (formData.sale_price <= 0) {
+    if (Number(formData.sale_price) <= 0) {
       newErrors.sale_price = 'El precio de venta debe ser mayor a 0';
-    } else if (formData.sale_price < formData.price_cost) {
+    } else if (Number(formData.sale_price) < Number(formData.price_cost)) {
+      console.log(formData.sale_price, formData.price_cost);
       newErrors.sale_price = 'El precio de venta no puede ser menor al costo';
     }
 

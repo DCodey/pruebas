@@ -39,13 +39,16 @@ const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProp
   const hasLeftIcon = !!leftIcon;
   const hasRightIcon = !!rightIcon;
 
-  const inputClasses = `block w-full bg-white rounded-lg border py-2.5 ${
+  const inputClasses = `block w-full rounded-lg border py-2.5 ${
     hasLeftIcon ? 'pl-10' : 'pl-3'
-  } pr-${hasRightIcon ? '10' : '3'} text-base text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-150 ${
+  } pr-${hasRightIcon ? '10' : '3'} text-base ${
+    props.disabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900'
+  } placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-150 ${
     error
       ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
       : 'border-gray-300 focus:border-primary-500 focus:ring-primary-100'
   } ${isTextarea ? 'min-h-[100px]' : ''} ${className}`;
+
 
   const renderInput = () => {
     const commonProps = {

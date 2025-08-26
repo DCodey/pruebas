@@ -4,7 +4,7 @@ export const ROUTES = {
     VENTAS: "/ventas",
     CLIENTES: "/clientes",
     PRODUCTOS: "/productos",
-    SERVICIOS_ESPECIALES: "/servicios-especiales",
+    SERVICIOS_ESPECIALES: "/servicios",
     NOT_FOUND: "*",
   } as const;
   

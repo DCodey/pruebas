@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import PaymentReceiptModal from './PaymentReceiptModal';
 import Modal from '../ui/Modal';
 import Select from '../ui/Select';
-import { updateSpecialService, getSpecialService } from '../../services/firebase/specialService';
-import Loader from '../ui/Loader';
+import { getSpecialServiceById } from '../../services/specialService';
+import { addPayment } from '../../services/paymentService';
 import {
   addWeeks,
   addMonths,
@@ -16,6 +17,9 @@ import {
   isSameMonth,
   isSameYear,
   eachMonthOfInterval,
+  differenceInWeeks,
+  differenceInMonths,
+  parseISO,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -46,6 +50,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [paymentFrequency, setPaymentFrequency] = useState<'weekly' | 'monthly' | 'yearly'>('weekly');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [amount, setAmount] = useState<number>(0);
+  const [currentService, setCurrentService] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastPayment, setLastPayment] = useState<any>(null);
+  const [transactionReference, setTransactionReference] = useState('');
+  const [notes, setNotes] = useState('');
   const [validUntil, setValidUntil] = useState<string>('');
   const [thursdays, setThursdays] = useState<Thursday[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
@@ -97,75 +108,90 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         setSelectedMonth(today);
         setAvailableMonths(generateAvailableMonths());
       }
+
+      // Obtener el servicio actual para el cálculo del monto
+      (async () => {
+        try {
+          const service = await getSpecialServiceById(Number(serviceId));
+          setCurrentService(service);
+        } catch (e) {
+          setCurrentService(null);
+        }
+      })();
     }
-  }, [isOpen, serviceStartDate]);
+  }, [isOpen, serviceStartDate, serviceId]);
+
+  // Calcula el monto y periodos igual que el backend
+  const calculatePeriodsAndAmount = (service: any) => {
+    if (!service || !service.start_date) return { periods: 0, amount: 0 };
+    let paymentDate: Date | null = null;
+    if (paymentFrequency === 'weekly' && selectedPaymentWeek) {
+      paymentDate = selectedPaymentWeek;
+    } else if (paymentFrequency === 'monthly' && selectedPaymentMonth) {
+      // Si el servicio es semanal pero el usuario selecciona meses, calcular semanas reales hasta fin de mes
+      paymentDate = endOfMonth(selectedPaymentMonth);
+    } else {
+      return { periods: 0, amount: 0 };
+    }
+    const startDate = typeof service.start_date === 'string' ? parseISO(service.start_date) : new Date(service.start_date);
+    const endDate = paymentDate;
+    let periods = 1;
+    if (currentService && currentService.recurrence_interval === 'weekly') {
+      // Calcular semanas reales entre la fecha de inicio y la fecha de pago (fin de mes si es mensual)
+      const diffDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      periods = Math.ceil(diffDays / 7) + 1; // Siempre contar la semana seleccionada
+      if (periods < 1) periods = 1;
+    } else if (currentService && currentService.recurrence_interval === 'monthly') {
+      // El backend cuenta el mes de inicio como 1 periodo si la fecha de pago está en el mismo mes o después
+      periods = differenceInMonths(endDate, startDate) + 1;
+      if (periods < 1) periods = 1;
+    }
+    const amount = +(periods * service.price).toFixed(2);
+    return { periods, amount };
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!selectedPaymentMonth) {
-      setError('Por favor selecciona un mes de pago');
-      return;
-    }
-
-    // Set payment date to the first day of the selected month
-    const paymentDate = startOfMonth(selectedPaymentMonth).toISOString().split('T')[0];
-    let isPaid = new Date(paymentDate) >= new Date(today);
-
-    // Clear any previous errors
     setError(null);
-
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-
-      const selectedDate = startOfMonth(new Date(paymentDate));
-      let validUntilDate: Date;
-
-      // Always set valid until to the end of the selected month
-      validUntilDate = endOfMonth(selectedDate);
-
-      // For yearly payments, add 1 year to the end of the selected month
-      if (paymentFrequency === 'yearly') {
-        validUntilDate = addYears(validUntilDate, 1);
-      }
-
-      // Format dates for Firestore
-      const now = new Date();
-      const paymentData = {
-        isPaid: isPaid,
-        paymentDate: selectedDate,
-        validUntil: validUntilDate,
-        paymentFrequency: paymentFrequency,
-        updatedAt: now
-      };
-
-      console.log('Updating payment with data:', paymentData);
-
-      // First get the current service data
-      const currentService = await getSpecialService(serviceId);
-
+      // Obtener datos del servicio para el monto
+      const currentService = await getSpecialServiceById(Number(serviceId));
       if (!currentService) {
         throw new Error('Servicio no encontrado');
       }
 
-      // Update the service with payment data
-      await updateSpecialService(serviceId, {
-        ...currentService,
-        ...paymentData,
-        // Ensure these fields are properly formatted
-        startDate: currentService.startDate,
-        deceasedName: currentService.deceasedName,
-        clientName: currentService.clientName,
-        clientId: currentService.clientId,
-        sector: currentService.sector,
-        price: currentService.price,
-        isActive: currentService.isActive !== false,
-        description: currentService.description || ''
-      });
+      // Determinar la fecha de pago según la frecuencia
+      let payment_date = '';
+      if (paymentFrequency === 'weekly' && selectedPaymentWeek) {
+        payment_date = selectedPaymentWeek.toISOString().split('T')[0];
+      } else if (paymentFrequency === 'monthly' && selectedPaymentMonth) {
+        payment_date = endOfMonth(selectedPaymentMonth).toISOString().split('T')[0];
+      } else if (paymentFrequency === 'yearly' && selectedYear) {
+        payment_date = new Date(selectedYear, 0, 1).toISOString().split('T')[0];
+      } else {
+        setError('Selecciona una fecha válida para el pago.');
+        setIsLoading(false);
+        return;
+      }
 
-      onPaymentSuccess();
-      onClose();
+      // Calcular el monto según la frecuencia
+      const { amount: amountToPay } = calculatePeriodsAndAmount(currentService);
+
+      const paymentData = {
+        service_id: Number(serviceId),
+        amount: amountToPay,
+        payment_date,
+        payment_method: paymentMethod,
+        transaction_reference: transactionReference,
+        notes,
+      };
+
+  const newPayment = await addPayment(paymentData);
+  setLastPayment(newPayment);
+  setShowReceipt(true);
+  onPaymentSuccess();
+  // No cerrar el modal principal hasta que el usuario cierre el voucher
     } catch (error) {
       console.error('Error al registrar el pago:', error);
       setError('Ocurrió un error al registrar el pago. Por favor, inténtalo de nuevo.');
@@ -458,44 +484,94 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     </div>
   );
 
+  // Función para restaurar el formulario a su estado inicial
+  const resetForm = () => {
+    setPaymentDate('');
+    setError(null);
+    setSelectedPaymentMonth(null);
+    setSelectedPaymentWeek(null);
+    setSelectedYear(new Date().getFullYear());
+    setPaymentFrequency('weekly');
+    setPaymentMethod('cash');
+    setTransactionReference('');
+    setNotes('');
+    setValidUntil('');
+    setThursdays([]);
+    setAvailableYears(generateAvailableYears());
+    if (serviceStartDate) {
+      const start = new Date(serviceStartDate);
+      setSelectedMonth(start);
+      setAvailableMonths(generateAvailableMonths());
+    } else {
+      const today = new Date();
+      setSelectedMonth(today);
+      setAvailableMonths(generateAvailableMonths());
+    }
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onClose();
+  };
+
   const modalFooter = (
-    <div className="flex justify-end gap-x-3">
-      <button
-        type="button"
-        onClick={onClose}
-        className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-        disabled={isLoading}
-      >
-        Cancelar
-      </button>
-      <button
-        type="submit"
-        form="special-service-form"
-        className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-70 flex items-center"
-        disabled={isLoading}
-      >
-        Guardar
-      </button>
+    <div className="flex flex-col gap-y-2">
+      <div className="mb-2 p-2 bg-blue-50 rounded-md border border-blue-200 text-blue-800 font-medium flex items-center justify-between">
+        <span>Resumen a pagar:</span>
+        <span>
+          {(() => {
+            if (!serviceId) return '---';
+            if (
+              (paymentFrequency === 'weekly' && selectedPaymentWeek) ||
+              (paymentFrequency === 'monthly' && selectedPaymentMonth)
+            ) {
+              if (!serviceStartDate || !currentService) return '---';
+              const { periods, amount: calcAmount } = calculatePeriodsAndAmount({ price: currentService.price, start_date: currentService.start_date });
+              return `S/ ${calcAmount} (${periods} Semana(s))`;
+            }
+            return '---';
+          })()}
+        </span>
+      </div>
+      <div className="flex justify-end gap-x-3">
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+          disabled={isLoading}
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          form="special-service-form"
+          className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-70 flex items-center"
+          disabled={isLoading}
+        >
+          Pagar
+        </button>
+      </div>
     </div>
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Registrar Pago" footer={modalFooter}>
-      <div className="mt-4">
-        <form id="special-service-form" onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-4">
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} title="Registrar Pago" footer={modalFooter}>
+        <div className="mt-4">
+          <form id="special-service-form" onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-4">
             <Select
               label="Forma de pago"
               id="paymentFrequency"
               value={paymentFrequency}
-              onChange={(e) => setPaymentFrequency(e.target.value as 'weekly' | 'monthly' | 'yearly')}
+              onChange={(e) => setPaymentFrequency(e.target.value as 'weekly' | 'monthly')}
               options={[
                 { value: 'weekly', label: 'Semanal' },
                 { value: 'monthly', label: 'Mensual' },
-                { value: 'yearly', label: 'Anual' },
               ]}
               containerClassName="mb-4"
             />
+
 
             {paymentFrequency === 'weekly' && (
               renderWeeklyView()
@@ -506,13 +582,25 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               renderMonthlyView()
             )}
 
-            {paymentFrequency === 'yearly' && renderAnnualView()}
+            {/* ...existing code... */}
 
             {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-          </div>
-        </form>
-      </div>
-    </Modal>
+            </div>
+          </form>
+        </div>
+      </Modal>
+      {/* Voucher/Comprobante de pago */}
+      <PaymentReceiptModal
+        isOpen={showReceipt}
+        onClose={() => {
+          setShowReceipt(false);
+          setLastPayment(null);
+          onClose();
+        }}
+        payment={lastPayment}
+        service={currentService}
+      />
+    </>
   );
 };
 
