@@ -1,6 +1,16 @@
+# Archivos del sistema
 .DS_Store
+
+# Dependencias
 /node_modules/
 
-# React Router
+# Builds de producción
+/dist/
+build/
+
+# Archivos temporales de Vite o React Router
 /.react-router/
-/build/
+
+# Archivos de entorno (nunca subir .env reales)
+.env*
+!.env.example
