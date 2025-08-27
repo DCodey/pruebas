@@ -1,10 +1,9 @@
-import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   base: '/',
-  plugins: [reactRouter(), tsconfigPaths()],
+  plugins: [tsconfigPaths()],
   appType: 'spa',
   server: {
     // host: '0.0.0.0',      // Escucha todas las IPs (necesario para acceder desde otro dispositivo)
