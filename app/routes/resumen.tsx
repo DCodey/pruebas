@@ -106,7 +106,7 @@ export function Resumen() {
 
         <div className="border border-gray-200 grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 p-4 bg-white rounded-lg shadow-sm">
           {/* Filtros rápidos */}
-          <div className="p-2 rounded-md items-center flex items-center border border-gray-50">
+          <div className="p-2 rounded-md items-center flex border border-gray-50">
             <div className="flex flex-wrap items-center gap-2 bg-gray-100 p-2 rounded-lg border border-gray-200">
               {['today', 'week', 'month'].map((filter) => (
                 <button

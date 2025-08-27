@@ -17,4 +17,8 @@ export default defineConfig({
   ssr: {
     noExternal: ['react-datepicker'], // evita que lo trate como paquete externo en SSR
   },
+  // build: {
+  //   minify: false,
+  //   sourcemap: true, // ayuda para depurar errores si algo falla en cliente
+  // }
 });
