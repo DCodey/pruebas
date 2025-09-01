@@ -154,7 +154,7 @@ export default function SpecialServiceForm({
       start_date: formData.start_date,
       end_date: formData.end_date || undefined,
       recurrence_interval: formData.recurrence_interval || 'weekly',
-      day_of_week: formData.day_of_week || null,
+      day_of_week: formData.day_of_week || 'thursday',
       day_of_month: formData.day_of_month || null,
     };
 
@@ -204,7 +204,7 @@ export default function SpecialServiceForm({
           />
         </div>
       </div>
-      <div className='grid grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 gap-4'>
         <div>
           <label htmlFor="sector" className="block text-sm font-medium text-gray-700">
             Nicho *
@@ -219,23 +219,7 @@ export default function SpecialServiceForm({
             placeholder="Ej: Campo sto, Bloq B, Fila 3, Col 7, Nicho N.º 342"
             required
           />
-        </div>
-        <div>
-          <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-            Precio *
-          </label>
-          <input
-            type="number"
-            id="price"
-            name="price"
-            min="0"
-            step="0.01"
-            value={formData.price}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-            required
-          />
-        </div>
+        </div>        
       </div>
 
 
@@ -269,8 +253,24 @@ export default function SpecialServiceForm({
             required
           />
         </div>
-
         <div>
+          <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+            Precio *
+          </label>
+          <input
+            type="number"
+            id="price"
+            name="price"
+            min="0"
+            step="0.01"
+            value={formData.price}
+            onChange={handleInputChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+            required
+          />
+        </div>
+
+        <div className="hidden">
           <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">
             Fecha de finalización (opcional)
           </label>
@@ -286,7 +286,7 @@ export default function SpecialServiceForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 hidden">
         <div>
           <label htmlFor="recurrence_interval" className="block text-sm font-medium text-gray-700">
             Frecuencia de servicio *
@@ -297,6 +297,7 @@ export default function SpecialServiceForm({
             value={formData.recurrence_interval || 'weekly'}
             onChange={handleInputChange}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+            disabled
           >
             <option value="weekly">Semanal</option>
             <option value="monthly">Mensual</option>
@@ -311,10 +312,11 @@ export default function SpecialServiceForm({
             <select
               id="day_of_week"
               name="day_of_week"
-              value={formData.day_of_week || ''}
+              value={formData.day_of_week || 'thursday'}
               onChange={(e) => setFormData(prev => ({ ...prev, day_of_week: e.target.value as any }))}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
               required
+              disabled
             >
               <option value="">Seleccione un día</option>
               <option value="monday">Lunes</option>

@@ -3,7 +3,8 @@ import Modal from '../ui/Modal';
 import type { Sale } from '../../services/saleService';
 import html2canvas from 'html2canvas';
 import { DocumentArrowDownIcon } from '@heroicons/react/24/solid';
-import { company } from 'src/utils/constants';
+import { COMPANY } from 'src/utils/constants';
+import { generateDisplayCode } from 'src/utils/helper';
 
 interface SaleDetailsModalProps {
   isOpen: boolean;
@@ -122,12 +123,6 @@ const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sa
     }
   };
 
-  const generateDisplayCode = (id: number) => {
-    const prefix = '#SALE';
-    const random = Math.floor((id * 98765) % 1000000).toString(36).toUpperCase();
-    return `${prefix}-${random}`;
-  };
-
   return (
     <Modal
       isOpen={isOpen}
@@ -148,8 +143,8 @@ const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sa
       <div ref={receiptRef} className="bg-gray-50 max-w-xs mx-auto p-6 font-mono print:p-0 print:shadow-none" style={{ WebkitPrintColorAdjust: 'exact' }}>
         {/* Header */}
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold">{company.name}</h2>
-          <p className="text-xs text-gray-600">{company.description}</p>
+          <h2 className="text-xl font-bold">{COMPANY.name}</h2>
+          <p className="text-xs text-gray-600">{COMPANY.description}</p>
           <p className="text-xs mt-1">--------------------------------</p>
         </div>
         
@@ -157,7 +152,7 @@ const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sa
         <div className="mb-4">
           <div className="flex justify-between text-xs">
             <span className="font-semibold">COMPROBANTE:</span>
-            <span>{generateDisplayCode(sale.id)}</span>
+            <span>{generateDisplayCode(sale.id, '#SALE')}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="font-semibold">FECHA:</span>
@@ -210,7 +205,7 @@ const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sa
           <p>¡Gracias por su compra!</p>
           <p className="mt-1">*** Venta no reembolsable ***</p>
           <p className="mt-4 text-[10px]">
-          © {new Date().getFullYear()} {company.footer}
+          © {new Date().getFullYear()} {COMPANY.footer}
           </p>
         </div>       
       </div>

@@ -7,6 +7,7 @@ import { getPayments } from '../../services/paymentService';
 import Loader from '../ui/Loader';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { formatDateToDisplay } from 'src/utils/dateUtils';
 
 interface PaymentHistoryModalProps {
   isOpen: boolean;
@@ -104,12 +105,8 @@ export default function PaymentHistoryModal({
                   >
                     <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {format(new Date(payment.created_at), 'PPP', { locale: es })}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {payment.payment_method} • {payment.transaction_reference || 'Sin referencia'}
-                        </p>
+                        <div className='text-gray-700 text-sm'> {formatDateToDisplay(payment.payment_start_date)} </div>
+                        <div className='text-gray-700 text-sm'> {formatDateToDisplay(payment.payment_end_date)}</div>
                         {payment.notes && (
                           <p className="mt-1 text-sm text-gray-500">{payment.notes}</p>
                         )}

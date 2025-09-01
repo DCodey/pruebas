@@ -19,6 +19,7 @@ export interface SpecialService {
     sector: string;
     start_date: string | Date;
     end_date?: string | Date;
+    last_payment_date?: string | Date;
 }
 
 // Estructura que se envia al backend

@@ -6,7 +6,9 @@ import { es } from 'date-fns/locale';
 import { DocumentArrowDownIcon } from '@heroicons/react/24/solid';
 import type { Payment } from '../../services/paymentService';
 import type { SpecialService } from '../../services/specialService';
-import { company } from '../../utils/constants';
+import { COMPANY, getRecurrenceLabel } from '../../utils/constants';
+import { formatDateToDisplay } from 'src/utils/dateUtils';
+import { generateDisplayCode } from 'src/utils/helper';
 
 interface PaymentReceiptModalProps {
   isOpen: boolean;
@@ -37,15 +39,15 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClo
   let periodos = 1;
   let tipoPeriodo = 'mes(es)';
   if (service && service.recurrence_interval === 'weekly') {
-    // Calcular semanas entre start_date y payment_date
-    const start = new Date(service.start_date);
-    const end = new Date(payment.payment_date);
+    // Calcular semanas entre start_date y payment_end_date
+    const start = new Date(payment.payment_start_date);
+    const end = new Date(payment.payment_end_date);
     const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     periodos = Math.ceil(diffDays / 7) + 1;
     tipoPeriodo = 'semana(s)';
   } else if (service && service.recurrence_interval === 'monthly') {
     const start = new Date(service.start_date);
-    const end = new Date(payment.payment_date);
+    const end = new Date(payment.payment_end_date);
     periodos = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
     if (periodos < 1) periodos = 1;
     tipoPeriodo = 'mes(es)';
@@ -65,15 +67,15 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClo
       <div ref={receiptRef} className="bg-gray-50 max-w-xs mx-auto p-6 font-mono print:p-0 print:shadow-none" style={{ WebkitPrintColorAdjust: 'exact' }}>
         {/* Header */}
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold">{company.name}</h2>
-          <p className="text-xs text-gray-600">{company.description}</p>
+          <h2 className="text-xl font-bold">{COMPANY.name}</h2>
+          <p className="text-xs text-gray-600">{COMPANY.description}</p>
           <p className="text-xs mt-1">--------------------------------</p>
         </div>
         {/* Info */}
         <div className="mb-4">
           <div className="flex justify-between text-xs">
             <span className="font-semibold">COMPROBANTE:</span>
-            <span>#{payment.id}</span>
+            <span>{generateDisplayCode(payment.id, '#PAYMENT')}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="font-semibold">FECHA:</span>
@@ -89,7 +91,7 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClo
           </div>
           <div className="flex justify-between text-xs">
             <span className="font-semibold">PAGO:</span>
-            <span className="uppercase">{payment.payment_method}</span>
+            <span className="uppercase">{getRecurrenceLabel(payment.payment_method)}</span>
           </div>
         </div>
         {/* Detalle */}
@@ -99,16 +101,21 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClo
             <span>{service.description || '-'}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span>Monto pagado:</span>
-            <span>S/ {payment.amount.toFixed(2)}</span>
+            <span>Fecha inicio :</span>
+            <span>{formatDateToDisplay(payment.payment_start_date)}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span>Referencia:</span>
-            <span>{payment.transaction_reference || '-'}</span>
+            <span>Fecha fin :</span>
+            <span>{formatDateToDisplay(payment.payment_end_date)}</span>
           </div>
+          
           <div className="flex justify-between text-xs mt-2">
             <span>Periodo pagado:</span>
             <span>{periodos} {tipoPeriodo}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span>Monto pagado:</span>
+            <span>S/ {payment.amount.toFixed(2)}</span>
           </div>
         </div>
         {/* Footer */}
@@ -116,7 +123,7 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClo
           <p>¡Gracias por su pago!</p>
           <p className="mt-1">*** Pago no reembolsable ***</p>
           <p className="mt-4 text-[10px]">
-          © {new Date().getFullYear()} {company.footer}
+          © {new Date().getFullYear()} {COMPANY.footer}
           </p>
         </div>
       </div>

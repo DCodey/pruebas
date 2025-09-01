@@ -5,7 +5,7 @@ export const PAYMENT_METHODS = [
   { value: 'Plin', label: 'Plin' },
   { value: 'Lemon', label: 'Lemon' },
 ];
-export const company = {
+export const COMPANY = {
     name: 'Floreria la fontana',
     description: 'Flores y regalos especiales',
     address: 'Av. Flora Tristan 1335, La Molina 15024',
@@ -15,3 +15,10 @@ export const company = {
     logo: 'https://floreriafontana.com/logo.png',
     footer: 'Floreria la fontana. Todos los derechos reservados.',
 };
+const recurrenceLabelMap: Record<string, string> = {
+  weekly: 'semanal',
+  monthly: 'mensual',
+};
+
+export const getRecurrenceLabel = (key: string): string =>
+  recurrenceLabelMap[key] || key;

@@ -4,7 +4,8 @@ export interface Payment {
   id: number;
   service_id: number;
   amount: number;
-  payment_date: string;
+  payment_start_date: string,
+  payment_end_date: string,
   payment_method: string;
   transaction_reference: string;
   notes: string;
@@ -12,10 +13,11 @@ export interface Payment {
   updated_at: string;
 }
 
-interface NewPaymentData {
+export interface NewPaymentData {
   service_id: number;
   amount: number;
-  payment_date: string;
+  payment_start_date: string,
+  payment_end_date: string,
   payment_method: string;
   transaction_reference: string;
   notes: string;

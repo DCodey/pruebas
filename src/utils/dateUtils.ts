@@ -88,3 +88,13 @@ export const updateDateKeepingTime = (currentDate: Date, dateString: string): Da
   
   return newDate;
 };
+
+
+/**
+ * Parsea una fecha tipo "YYYY-MM-DD" como una fecha local (sin conversión a UTC)
+ * devuelve "DD-MM-YYYY"
+ */
+export const formatDateToDisplay = (dateStr: string): string => {
+  const [year, month, day] = dateStr.split('-');
+  return `${day}-${month}-${year}`;
+};

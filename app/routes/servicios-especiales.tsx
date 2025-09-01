@@ -9,6 +9,7 @@ import {
   updateSpecialService, 
   deleteDefinitiveSpecialService
 } from '../../src/services/specialService';
+
 import type { 
   SpecialService,
   NewSpecialServiceData 
@@ -17,10 +18,11 @@ import type { Client as ClientType } from '../../src/services/clientService';
 import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import SpecialServiceForm from '../../src/components/servicios-especiales/SpecialServiceForm';
-import { PaymentModal } from '../../src/components/servicios-especiales/PaymentModal';
+import PaymentModalLite from '../../src/components/servicios-especiales/PaymentModalLite';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Table, TableContainer } from '../../src/components/ui/Table';
+import { addPayment, type NewPaymentData } from '../../src/services/paymentService';
 
 function ServiciosEspecialesContent() {
   const [services, setServices] = useState<SpecialService[]>([]);
@@ -62,7 +64,33 @@ function ServiciosEspecialesContent() {
   };
 
   const handlePaymentSuccess = () => {
-    fetchServices(); // Refresh the services list
+    setIsPaymentModalOpen(false);
+    fetchServices(); // Recargar la lista de servicios
+  };
+
+  const handleRegisterPayment = async (data: { startDate: string; endDate: string; amount: number; notes: string }) => {
+    if (!currentService) return;
+
+    const paymentData: NewPaymentData = {
+      service_id: currentService.id,
+      amount: data.amount,
+      payment_start_date: data.startDate,
+      payment_end_date: data.endDate,
+      payment_method: 'Efectivo',
+      transaction_reference: '', // Opcional, se puede añadir un campo si es necesario
+      notes: data.notes,
+    };
+
+    try {
+      await addPayment(paymentData);
+      // Aquí puedes añadir una notificación de éxito
+      alert('Pago registrado exitosamente');
+      handlePaymentSuccess();
+    } catch (error) {
+      console.error('Error al registrar el pago:', error);
+      // Aquí puedes añadir una notificación de error
+      alert('Error al registrar el pago');
+    }
   };
 
   const handleSaveService = async (formData: NewSpecialServiceData) => {
@@ -85,7 +113,7 @@ function ServiciosEspecialesContent() {
         end_date: formData.end_date,
         recurrence_interval: formData.recurrence_interval,
         day_of_week: formData.day_of_week,
-        day_of_month: formData.day_of_month
+        day_of_month: formData.day_of_month,
       };
 
       if (currentService) {
@@ -330,18 +358,35 @@ function ServiciosEspecialesContent() {
         isPaid={currentService?.is_paid || false}
       />
 
-      <PaymentModal
+      <PaymentModalLite
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
-        serviceId={currentService?.id.toString() || ''}
         serviceStartDate={
           currentService?.start_date
             ? typeof currentService.start_date === 'string'
-              ? new Date(currentService.start_date)
-              : currentService.start_date
-            : undefined
+              ? currentService.start_date
+              : currentService.start_date.toISOString()
+            : ''
         }
-        onPaymentSuccess={handlePaymentSuccess}
+        serviceEndDate={
+          currentService?.last_payment_date
+            ? typeof currentService.last_payment_date === 'string'
+              ? currentService.last_payment_date
+              : currentService.last_payment_date.toISOString()
+            : ''
+        }
+        lastPaymentDate={
+          currentService?.last_payment_date
+            ? typeof currentService.last_payment_date === 'string'
+              ? currentService.last_payment_date
+              : currentService.last_payment_date.toISOString()
+            : null
+        }
+        recurrenceInterval={currentService?.recurrence_interval || 'weekly'}
+        dayOfWeek={currentService?.day_of_week || 'thursday'}
+        dayOfMonth={currentService?.day_of_month || null}
+        price={currentService?.price || 0}
+        onPayment={handleRegisterPayment}
       />
     </>
   );
@@ -350,7 +395,7 @@ function ServiciosEspecialesContent() {
 export default function ServiciosEspeciales() {
   return (
     <DashboardLayout>
-      <p className="text-center text-2xl font-bold text-gray-500 h-screen flex items-center justify-center">En Mantenimiento 🛠️</p>
+      <ServiciosEspecialesContent />
     </DashboardLayout>
   );
 }

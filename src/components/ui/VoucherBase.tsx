@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import Modal from './Modal';
 import html2canvas from 'html2canvas';
 import { DocumentArrowDownIcon } from '@heroicons/react/24/solid';
-import { company } from 'src/utils/constants';
+import { COMPANY } from 'src/utils/constants';
 
 interface VoucherBaseProps {
   isOpen: boolean;
@@ -57,8 +57,8 @@ const VoucherBase: React.FC<VoucherBaseProps> = ({
       <div ref={receiptRef} className="bg-gray-50 max-w-xs mx-auto p-6 font-mono print:p-0 print:shadow-none" style={{ WebkitPrintColorAdjust: 'exact' }}>
         {/* Header */}
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold">{company.name}</h2>
-          <p className="text-xs text-gray-600">{headerNote || company.description}</p>
+          <h2 className="text-xl font-bold">{COMPANY.name}</h2>
+          <p className="text-xs text-gray-600">{headerNote || COMPANY.description}</p>
           <p className="text-xs mt-1">--------------------------------</p>
         </div>
         {/* Info */}
@@ -91,7 +91,7 @@ const VoucherBase: React.FC<VoucherBaseProps> = ({
           <p>{footerNote || '¡Gracias por su preferencia!'}</p>
           <p className="mt-1">*** No reembolsable ***</p>
           <p className="mt-4 text-[10px]">
-          © {new Date().getFullYear()} {company.footer}
+          © {new Date().getFullYear()} {COMPANY.footer}
           </p>
         </div>
       </div>
