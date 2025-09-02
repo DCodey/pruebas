@@ -1,4 +1,19 @@
 /**
+ * Si la fecha cambia, actualiza la hora a la hora actual del sistema, si no, mantiene la hora original.
+ * @param {Date} originalDate - Fecha original (con hora original)
+ * @param {string} newDateString - Nueva fecha en formato YYYY-MM-DD
+ * @returns {Date} Nueva fecha con la hora correspondiente
+ */
+export function setDateWithCurrentTimeIfChanged(originalDate: Date, newDateString: string): Date {
+  const updatedDate = updateDateKeepingTime(originalDate, newDateString);
+  const originalYMD = originalDate.toISOString().slice(0, 10);
+  if (newDateString !== originalYMD) {
+    const now = new Date();
+    updatedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+  }
+  return updatedDate;
+}
+/**
  * Utilidades para el manejo de fechas en UTC y conversión a UTC-5 (hora de Perú)
  */
 
