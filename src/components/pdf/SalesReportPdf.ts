@@ -44,7 +44,7 @@ export const generateSalesReportPdf = ({
   doc.text(`Monto total: S/ ${Number(totalAmount).toFixed(2)}`, 14, 55);
   
   // Configuración de la tabla
-  const tableColumn = ["Fecha", "Cliente", "Productos", "Total"];
+  const tableColumn = ["Fecha", "Cliente", "Productos", "Métodos de pagos","Total"];
   const tableRows: any[] = [];
   
   // Procesar datos para la tabla
@@ -53,7 +53,9 @@ export const generateSalesReportPdf = ({
       sale.sale_date,
       sale.client_name || 'Cliente no registrado',
       sale.items.map(item => `${item.quantity}x ${item.product_name}`).join(', '),
-      `S/ ${Number(sale.total).toFixed(2)}`
+      sale?.payment_method?.name || '-',
+      `S/ ${Number(sale.total).toFixed(2)}`,
+      
     ];
     tableRows.push(saleData);
   });

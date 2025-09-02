@@ -10,6 +10,7 @@ const navigation = [
     { name: 'Clientes', href: ROUTES.CLIENTES, icon: '👥' },
     { name: 'Productos', href: ROUTES.PRODUCTOS, icon: '📦' },
     { name: 'Servicios Especiales', href: ROUTES.SERVICIOS_ESPECIALES, icon: '🛠️' },
+    { name: 'Configuración', href: ROUTES.CONFIGURACION, icon: '⚙️' },
 ];
 
 interface SidebarProps {

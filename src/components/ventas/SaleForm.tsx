@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { SaleItem, NewSaleData, PaymentMethod } from '../../services/saleService';
-import { PAYMENT_METHODS } from '../../utils/constants';
+import type { SaleItem, NewSaleData } from '../../services/saleService';
+import { getPaymentMethods, type PaymentMethod } from '../../services/PaymentMethodService';
 import { getClients, type Client } from '../../services/clientService';
 import { getProducts, type Product } from '../../services/productService';
 import { 
@@ -9,6 +9,7 @@ import {
 } from '../../utils/dateUtils';
 import Input from '../ui/Input';
 import { TrashIcon } from '@heroicons/react/24/outline';
+import Loader from '../ui/Loader';
 
 interface SaleFormProps {
   onSubmit: (formData: NewSaleData) => void;
@@ -23,13 +24,36 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   // Datos de la BD
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   
   // Estado de la venta actual
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [anonymousClientName, setAnonymousClientName] = useState('');
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Efectivo');
+  const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  // Cargar clientes y métodos de pago dinámicamente
+  useEffect(() => {
+    setLoading(true);
+    const fetchAll = async () => {
+      try {
+        const [clientsData, methods] = await Promise.all([
+          getClients(),
+          getPaymentMethods()
+        ]);
+        setClients(clientsData);
+        if (clientsData.length > 0) setSelectedClientId(clientsData[0].id);
+        setPaymentMethods(methods.filter(m => m.is_active));
+  if (methods.length > 0) setPaymentMethod(String(methods[0].id));
+      } catch (error) {
+        console.error('Error cargando datos para la venta:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, []);
   const [fechaDeVenta, setFechaDeVenta] = useState<Date>(new Date());
   const [sale_date, setSaleDate] = useState<string>(() => {
     const now = new Date();
@@ -41,18 +65,15 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   const [customProductPrice, setCustomProductPrice] = useState(0);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProducts = async () => {
       try {
-        const clientsData = await getClients();
-        setClients(clientsData);
-        if (clientsData.length > 0) setSelectedClientId(clientsData[0].id);
         const productsData = await getProducts();
         setProducts(productsData);
       } catch (error) {
-        console.error("Error cargando datos para la venta: ", error);
+        console.error("Error cargando productos: ", error);
       }
     };
-    fetchData();
+    fetchProducts();
   }, []);
 
   useEffect(() => {
@@ -150,12 +171,20 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
       client_name: client?.name || anonymousClientName.trim() || 'Anónimo',
       items: formattedItems,
       total: formattedItems.reduce((sum, item) => sum + item.subtotal, 0),
-      payment_method: paymentMethod,
+  payment_method_id: Number(paymentMethod),
       // Use the selected date and time from the state
       sale_date: toUTC5(fechaDeVenta || new Date()).toISOString().slice(0, 19).replace('T', ' '),
     };
     onSubmit(saleData as NewSaleData);
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[300px]">
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <form id="sale-form" onSubmit={handleSubmit} className="space-y-6 sm:p-4 max-w-4xl mx-auto">
@@ -232,21 +261,25 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
         </div>
         <div className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {PAYMENT_METHODS.map((method) => (
-              <label key={method.value} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value={method.value}
-                  checked={paymentMethod === method.value}
-                  onChange={() => setPaymentMethod(method.value as PaymentMethod)}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-                />
-                <span className="ml-2 text-sm font-medium text-gray-700 capitalize">
-                  {method.label}
-                </span>
-              </label>
-            ))}
+            {paymentMethods.length === 0 ? (
+              <span className="text-gray-500 col-span-3">No hay métodos de pago configurados</span>
+            ) : (
+              paymentMethods.map((method) => (
+                <label key={method.id} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={method.id}
+                    checked={paymentMethod === String(method.id)}
+                    onChange={() => setPaymentMethod(String(method.id))}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                  />
+                  <span className="ml-2 text-sm font-medium text-gray-700 capitalize">
+                    {method.name}
+                  </span>
+                </label>
+              ))
+            )}
           </div>
         </div>
       </div>

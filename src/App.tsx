@@ -5,6 +5,7 @@ import Ventas from '../app/routes/ventas';
 import Clientes from '../app/routes/clientes';
 import Productos from '../app/routes/productos';
 import ServiciosEspeciales from '../app/routes/servicios-especiales';
+import Configuracion from '../app/routes/Configuracion';
 import LoginPage from '../app/routes/inicio_sesion';
 import NotFound from '../app/routes/not-found';
 import { AuthProvider } from './contexts/AuthContext';
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/productos" element={<Productos />} />
           <Route path="/servicios" element={<ServiciosEspeciales />} />
+          <Route path="/configuracion" element={<Configuracion />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AlertProvider>

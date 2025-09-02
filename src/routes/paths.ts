@@ -5,6 +5,7 @@ export const ROUTES = {
     CLIENTES: "/clientes",
     PRODUCTOS: "/productos",
     SERVICIOS_ESPECIALES: "/servicios",
+    CONFIGURACION: "/configuracion",
     NOT_FOUND: "*",
   } as const;
   

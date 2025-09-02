@@ -164,6 +164,16 @@ function VentasContent() {
                       header: 'Items',
                       render: (sale: Sale) => sale.items.length
                     },
+                    {
+                      key: 'payment_method', 
+                      header: 'Método de Pago',
+                      render: (sale: Sale) => (
+                        <span className="text-sm text-gray-500 uppercase">
+                          {sale?.payment_method?.name || '-'}
+                        </span>
+                      )
+
+                    },
                     { 
                       key: 'total', 
                       header: 'Total',
