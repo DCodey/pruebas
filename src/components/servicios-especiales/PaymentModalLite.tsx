@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { calculatePaymentPeriodsAndAmount } from '../../utils/paymentUtils';
 import Modal from '../ui/Modal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -57,25 +58,15 @@ const PaymentModalLite: React.FC<PaymentModalLiteProps> = ({
   }, [lastPaymentDate, serviceStartDate, isOpen]);
 
   useEffect(() => {
-    if (!startDate || !endDate) {
-      setSummary({ periods: 0, amount: 0 });
-      return;
-    }
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    let periods = 0;
-    if (recurrenceInterval === 'weekly') {
-      // Calcular semanas completas entre las fechas (incluyendo la semana inicial)
-      const msInWeek = 7 * 24 * 60 * 60 * 1000;
-      periods = Math.floor((end.getTime() - start.getTime()) / msInWeek) + 1;
-      if (periods < 1) periods = 1;
-    } else if (recurrenceInterval === 'monthly') {
-      // Calcular meses completos entre las fechas (incluyendo el mes inicial)
-      periods = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
-      if (periods < 1) periods = 1;
-    }
-    setSummary({ periods, amount: periods * price });
-  }, [startDate, endDate, recurrenceInterval, price]);
+      setSummary(
+        calculatePaymentPeriodsAndAmount({
+          startDate,
+          endDate,
+          recurrenceInterval,
+          price
+        })
+      );
+    }, [startDate, endDate, recurrenceInterval, price]);
 
   const handleClose = () => {
     resetForm();
@@ -146,7 +137,7 @@ const PaymentModalLite: React.FC<PaymentModalLiteProps> = ({
             <p className="text-sm font-medium text-gray-600">{serviceStartDate ? format(new Date(serviceStartDate), 'dd/MM/yyyy', { locale: es }) : '---'}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-400">Pagado hasta</p>
+            <p className="text-xs text-gray-400">Fecha último pago</p>
             <p className="text-sm font-medium text-gray-600">{serviceEndDate ? format(new Date(serviceEndDate), 'dd/MM/yyyy', { locale: es }) : '---'}</p>
           </div>
           <div className="text-right">
@@ -156,7 +147,7 @@ const PaymentModalLite: React.FC<PaymentModalLiteProps> = ({
         </div>
         
         <div className='border border-gray-200 p-2 rounded-lg bg-white'>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Período de pago</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Periodo a pagar</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="relative">
               <input

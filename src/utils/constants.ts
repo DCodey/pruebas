@@ -6,14 +6,14 @@ export const PAYMENT_METHODS = [
   { value: 'Lemon', label: 'Lemon' },
 ];
 export const COMPANY = {
-    name: 'Floreria la fontana',
-    description: 'Flores y regalos especiales',
+    name: 'Florería la fontana',
+    description: 'Arreglos, ramos y plantas',
     address: 'Av. Flora Tristan 1335, La Molina 15024',
     phone: '975 300 895',
     email: 'info@floreriafontana.com',
     website: 'https://floreriafontana.com',
     logo: 'https://floreriafontana.com/logo.png',
-    footer: 'Floreria la fontana. Todos los derechos reservados.',
+    footer: 'Florería la fontana. Todos los derechos reservados.',
 };
 const recurrenceLabelMap: Record<string, string> = {
   weekly: 'semanal',

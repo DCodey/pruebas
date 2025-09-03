@@ -7,6 +7,7 @@ import { DocumentArrowDownIcon } from '@heroicons/react/24/solid';
 import type { Payment } from '../../services/paymentService';
 import type { SpecialService } from '../../services/specialService';
 import { COMPANY, getRecurrenceLabel } from '../../utils/constants';
+import { calculatePaymentPeriodsAndAmount } from '../../utils/paymentUtils';
 import { formatDateToDisplay } from 'src/utils/dateUtils';
 import { generateDisplayCode } from 'src/utils/helper';
 
@@ -35,22 +36,18 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClo
     link.click();
   };
 
-  // Calcular periodos pagados
+  // Calcular periodos pagados usando el helper reutilizable
   let periodos = 1;
   let tipoPeriodo = 'mes(es)';
-  if (service && service.recurrence_interval === 'weekly') {
-    // Calcular semanas entre start_date y payment_end_date
-    const start = new Date(payment.payment_start_date);
-    const end = new Date(payment.payment_end_date);
-    const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    periodos = Math.ceil(diffDays / 7) + 1;
-    tipoPeriodo = 'semana(s)';
-  } else if (service && service.recurrence_interval === 'monthly') {
-    const start = new Date(service.start_date);
-    const end = new Date(payment.payment_end_date);
-    periodos = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
-    if (periodos < 1) periodos = 1;
-    tipoPeriodo = 'mes(es)';
+  if (service && (service.recurrence_interval === 'weekly' || service.recurrence_interval === 'monthly')) {
+    const { periods } = calculatePaymentPeriodsAndAmount({
+      startDate: payment.payment_start_date,
+      endDate: payment.payment_end_date,
+      recurrenceInterval: service.recurrence_interval,
+      price: 1 // El monto no importa aquí, solo queremos los periodos
+    });
+    periodos = periods;
+    tipoPeriodo = service.recurrence_interval === 'weekly' ? 'semana(s)' : 'mes(es)';
   }
 
   return (
@@ -84,15 +81,7 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClo
           <div className="flex justify-between text-xs">
             <span className="font-semibold">CLIENTE:</span>
             <span>{service.client?.name || '-'}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="font-semibold">SERVICIO:</span>
-            <span>{service.name}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="font-semibold">PAGO:</span>
-            <span className="uppercase">{getRecurrenceLabel(payment.payment_method)}</span>
-          </div>
+          </div>          
         </div>
         {/* Detalle */}
         <div className="border-t border-b border-dashed border-gray-300 py-2 my-2">

@@ -23,6 +23,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Table, TableContainer } from '../../src/components/ui/Table';
 import { addPayment, type NewPaymentData } from '../../src/services/paymentService';
+import { useAlert } from '../../src/contexts/AlertContext';
+import { Backend } from 'firebase/ai';
 
 function ServiciosEspecialesContent() {
   const [services, setServices] = useState<SpecialService[]>([]);
@@ -31,6 +33,7 @@ function ServiciosEspecialesContent() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [currentService, setCurrentService] = useState<SpecialService | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  
 
   const fetchServices = async () => {
     try {
@@ -68,6 +71,7 @@ function ServiciosEspecialesContent() {
     fetchServices(); // Recargar la lista de servicios
   };
 
+  const { showError } = useAlert();
   const handleRegisterPayment = async (data: { startDate: string; endDate: string; amount: number; notes: string }) => {
     if (!currentService) return;
 
@@ -86,10 +90,11 @@ function ServiciosEspecialesContent() {
       // Aquí puedes añadir una notificación de éxito
       alert('Pago registrado exitosamente');
       handlePaymentSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al registrar el pago:', error);
-      // Aquí puedes añadir una notificación de error
-      alert('Error al registrar el pago');
+      // Mostrar mensaje real del backend si existe
+      const backendMsg = error?.response?.data?.message || 'No se pudo registrar el pago';
+      showError('Error de validación', 8000, backendMsg);
     }
   };
 
@@ -233,21 +238,7 @@ function ServiciosEspecialesContent() {
                       S/. {service.price}
                     </div>
                   )
-                },
-                {
-                  key: 'isActive',
-                  header: 'Estado',
-                  render: (service: SpecialService) => (
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      service.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {service.is_active ? 'Activo' : 'Inactivo'}
-                    </span>
-                  ),
-                  className: 'text-gray-500'
-                },
+                },               
                 {
                   key: 'status',
                   header: 'Estado de pago',
