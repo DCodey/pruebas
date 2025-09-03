@@ -5,8 +5,13 @@ export interface Sale {
     client_name: string | null;
     sale_date: string;
     total: number;
-    payment_method: String;
+    payment_method: SalePaymentMethod;
     items: SaleItem[];
+}
+
+export interface SalePaymentMethod{
+    id: number;
+    name: string;
 }
 
 export interface SaleItem {
@@ -21,7 +26,7 @@ export interface NewSaleData {
     client_id: number | null;
     client_name: string | null;
     sale_date: string;
-    payment_method: String;
+    payment_method_id: number;
     items: SaleItem[];
 }
 
@@ -39,7 +44,7 @@ export const addSale = async (saleData: NewSaleData): Promise<number> => {
         client_id: saleData.client_id,
         client_name: saleData.client_name,
         sale_date: saleData.sale_date,
-        payment_method: saleData.payment_method,
+        payment_method_id: saleData.payment_method_id,
         items: saleData.items,
     });
 
@@ -52,7 +57,7 @@ export const updateSale = async (saleId: number, saleData: NewSaleData): Promise
         client_id: saleData.client_id,
         client_name: saleData.client_name,
         sale_date: saleData.sale_date,
-        payment_method: saleData.payment_method,
+        payment_method_id: saleData.payment_method_id,
         items: saleData.items,
     });
 

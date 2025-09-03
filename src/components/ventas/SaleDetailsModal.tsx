@@ -164,7 +164,7 @@ const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sa
           </div>
           <div className="flex justify-between text-xs">
             <span className="font-semibold">PAGO:</span>
-            <span className="uppercase">{sale.payment_method}</span>
+            <span className="uppercase">{sale.payment_method?.name}</span>
           </div>
         </div>
 

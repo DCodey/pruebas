@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
-import { PlusIcon, EyeIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, EyeIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
+import EditSaleModal from '../../src/components/ventas/EditSaleModal';
 import { getSales, addSale, deleteSale, getSaleById, type Sale, type NewSaleData } from '../../src/services/saleService';
 import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
@@ -11,6 +12,8 @@ import { useAlert } from '../../src/contexts/AlertContext';
 import { TableContainer, Table } from '../../src/components/ui/Table';
 
 function VentasContent() {
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [saleToEdit, setSaleToEdit] = useState<Sale | null>(null);
   const { showError, showSuccess } = useAlert();
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,6 +107,17 @@ function VentasContent() {
     }
   };
 
+  const handleEditClick = (sale: Sale) => {
+    setSaleToEdit(sale);
+    setEditModalOpen(true);
+  };
+
+  const handleEditUpdated = async (updatedSale: Sale) => {
+    setEditModalOpen(false);
+    showSuccess('Venta actualizada correctamente');
+    await fetchSales();
+  };
+
   return (
     <>
       <PageLayout
@@ -164,6 +178,16 @@ function VentasContent() {
                       header: 'Items',
                       render: (sale: Sale) => sale.items.length
                     },
+                    {
+                      key: 'payment_method', 
+                      header: 'Método de Pago',
+                      render: (sale: Sale) => (
+                        <span className="text-sm text-gray-500 uppercase">
+                          {sale?.payment_method?.name || '-'}
+                        </span>
+                      )
+
+                    },
                     { 
                       key: 'total', 
                       header: 'Total',
@@ -184,6 +208,17 @@ function VentasContent() {
                             title="Ver detalles"
                           >
                             <EyeIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(sale);
+                            }}                            
+                            className="text-primary-600 hover:text-primary-900"
+                            title="Editar"
+                          >
+                            <PencilIcon className="h-5 w-5" />
                           </button>
                           <button
                             type="button"
@@ -218,6 +253,14 @@ function VentasContent() {
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         sale={selectedSale}
+      />
+
+      {/* Edit Sale Modal */}
+      <EditSaleModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        sale={saleToEdit}
+        onUpdated={handleEditUpdated}
       />
 
       {/* Add/Edit Sale Modal */}

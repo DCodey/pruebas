@@ -8,7 +8,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Table, TableContainer } from '../../src/components/ui/Table';
 import Loader from '../../src/components/ui/Loader';
 import MultiSelect, { type MultiSelectOption } from '../../src/components/ui/MultiSelect';
-import { PAYMENT_METHODS } from '../../src/utils/constants';
+import { getPaymentMethods, type PaymentMethod } from '../../src/services/PaymentMethodService';
 
 // Helper para fechas
 const getStartOfDay = (date: Date) => new Date(date.setHours(0, 0, 0, 0));
@@ -22,6 +22,24 @@ export function Resumen() {
   const [activeFilter, setActiveFilter] = useState<'today' | 'week' | 'month'>('today');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<MultiSelectOption[]>([]);
+  const [paymentMethodOptions, setPaymentMethodOptions] = useState<MultiSelectOption[]>([]);
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(true);
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      setLoadingPaymentMethods(true);
+      try {
+        const methods = await getPaymentMethods();
+        setPaymentMethodOptions(
+          methods.filter(m => m.is_active).map(m => ({ value: m.id?.toString() || '', label: m.name }))
+        );
+      } catch (error) {
+        setPaymentMethodOptions([]);
+      } finally {
+        setLoadingPaymentMethods(false);
+      }
+    };
+    fetchPaymentMethods();
+  }, []);
 
   useEffect(() => {
     const fetchSales = async () => {
@@ -62,7 +80,7 @@ export function Resumen() {
       return true; // Si no hay filtro, mostrar todas las ventas
     }
     // Comprobar si el método de pago de la venta está en los filtros seleccionados
-    return paymentMethodFilter.some(option => option.value === sale.payment_method);
+    return paymentMethodFilter.some(option => option.value === sale.payment_method?.id.toString());
   });
 
   const totalSales = filteredSales.reduce((sum, sale) => sum + parseFloat(String(sale.total)), 0);
@@ -157,9 +175,11 @@ export function Resumen() {
                   id="paymentMethodFilter"
                   value={paymentMethodFilter}
                   onChange={(selectedOptions) => setPaymentMethodFilter(selectedOptions as MultiSelectOption[])}
-                  options={PAYMENT_METHODS}
+                  options={paymentMethodOptions}
+                  isLoading={loadingPaymentMethods}
                   containerClassName="w-full"
                   className="text-sm"
+                  placeholder={loadingPaymentMethods ? 'Cargando...' : 'Todos'}
                 />
               </div>
             </div>
@@ -213,7 +233,7 @@ export function Resumen() {
                   key: 'metodoPago',
                   header: 'Método de Pago',
                   className: 'text-gray-800 font-mono',
-                  render: (sale) => sale.payment_method
+                  render: (sale) => sale.payment_method?.name || '-'
                 },
                 {
                   key: 'total',
