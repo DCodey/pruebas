@@ -209,6 +209,7 @@ function ProductosContent() {
             data={products}
             keyExtractor={(product) => product.id}
             onRowClick={handleOpenModal}
+            searchable
             emptyMessage="No hay productos registrados"
             rowClassName="hover:bg-gray-50 cursor-pointer"
           />
@@ -238,11 +239,7 @@ function ProductosContent() {
         onConfirm={confirmDelete}
         onCancel={() => { setShowDeleteConfirm(false); setDeleteId(null); }}
       />
-      {isLoading && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-30">
-          <Loader />
-        </div>
-      )}
+      {isLoading && ( <Loader /> )}
     </PageLayout>
   );
 }

@@ -53,7 +53,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Contenido */}
-        <main id="main-content" className="md:rounded-2xl w-full bg-white p-3 md:p-0 h-screen h-[calc(100dvh-10px)] shadow-sm">
+        <main id="main-content" className="md:rounded-2xl w-full bg-white p-3 md:p-0 h-[calc(100dvh-10px)] shadow-sm">
           <div className=" ">
             {children}
           </div>

@@ -318,6 +318,7 @@ function ServiciosEspecialesContent() {
               ]}
               data={services}
               keyExtractor={(service) => service.id}
+              searchable
               emptyMessage="No hay servicios especiales registrados"
               rowClassName="hover:bg-gray-50 cursor-pointer"
             />

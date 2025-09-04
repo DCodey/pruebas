@@ -18,6 +18,7 @@ function ClientesContent() {
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -62,6 +63,7 @@ function ClientesContent() {
     celular: number;
     numeroDocumento?: string;
   }
+  const filteredClients = clients.filter(client => { const term = searchTerm.toLowerCase(); return ( client.name?.toLowerCase().includes(term) || client.description?.toLowerCase().includes(term) || client.phone?.toLowerCase().includes(term) || client.document_number?.toLowerCase().includes(term) ); });
 
   const handleSaveClient = async (formData: Omit<Client, 'id'>) => {
     setIsLoading(true);
@@ -206,7 +208,8 @@ function ClientesContent() {
                 )
               }
             ]}
-            data={clients}
+            data={filteredClients}
+            searchable
             keyExtractor={(client) => client.id}
             onRowClick={handleOpenModal}
             emptyMessage="No hay clientes registrados"
@@ -232,11 +235,7 @@ function ClientesContent() {
         onConfirm={confirmDelete}
         onCancel={() => { setShowDeleteConfirm(false); setDeleteId(null); }}
       />
-      {isLoading && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-30">
-          <Loader />
-        </div>
-      )}
+      {isLoading && ( <Loader /> )}
     </>
   );
 }

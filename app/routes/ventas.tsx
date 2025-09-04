@@ -140,7 +140,7 @@ function VentasContent() {
         <div className="flex flex-col">
           <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-              <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+              
               <TableContainer>
                 <Table<Sale>
                   columns={[
@@ -239,10 +239,11 @@ function VentasContent() {
                   keyExtractor={(sale: Sale) => sale.id.toString()}
                   emptyMessage="No hay ventas registradas"
                   rowClassName="hover:bg-gray-50"
+                  searchable
                   onRowClick={(sale: Sale) => handleViewDetails(sale)}
                 />
               </TableContainer>
-              </div>
+              
             </div>
           </div>
         </div>
