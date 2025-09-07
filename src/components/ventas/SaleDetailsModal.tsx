@@ -3,8 +3,8 @@ import Modal from '../ui/Modal';
 import type { Sale } from '../../services/saleService';
 import html2canvas from 'html2canvas';
 import { DocumentArrowDownIcon } from '@heroicons/react/24/solid';
-import { COMPANY } from 'src/utils/constants';
 import { generateDisplayCode } from 'src/utils/helper';
+import { useCompany } from '../../contexts/CompanyContext';
 
 interface SaleDetailsModalProps {
   isOpen: boolean;
@@ -14,6 +14,7 @@ interface SaleDetailsModalProps {
 
 const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sale }) => {
   if (!sale) return null;
+  const { data: company } = useCompany();
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -143,8 +144,8 @@ const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sa
       <div ref={receiptRef} className="bg-gray-50 max-w-xs mx-auto p-6 font-mono print:p-0 print:shadow-none" style={{ WebkitPrintColorAdjust: 'exact' }}>
         {/* Header */}
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold">{COMPANY.name}</h2>
-          <p className="text-xs text-gray-600">{COMPANY.description}</p>
+          <h2 className="text-xl font-bold">{company?.app_name}</h2>
+          <p className="text-xs text-gray-600">{company?.app_description}</p>
           <p className="text-xs mt-1">--------------------------------</p>
         </div>
         
@@ -203,10 +204,7 @@ const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({ isOpen, onClose, sa
         {/* Footer */}
         <div className="mt-6 text-center text-xs text-gray-500">
           <p>¡Gracias por su compra!</p>
-          <p className="mt-1">*** Venta no reembolsable ***</p>
-          <p className="mt-4 text-[10px]">
-          © {new Date().getFullYear()} {COMPANY.footer}
-          </p>
+          <p className="mt-1">*** Venta no reembolsable ***</p>          
         </div>       
       </div>
     </Modal>

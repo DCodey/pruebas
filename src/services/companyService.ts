@@ -4,11 +4,13 @@ import api from './axiosConfig';
 export interface CompanyData {
   app_name: string;
   app_description: string;
-  company_name: string;
+
+  //Desactivado por ahora hasta que se use
+  /*company_name: string;
   company_address: string;
   company_phone: string;
   company_email: string;
-  company_document: string;
+  company_document: string;*/
 }
 
 

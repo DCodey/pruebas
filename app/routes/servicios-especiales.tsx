@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
-import { PlusIcon, PencilIcon, TrashIcon, CreditCardIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, CreditCardIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 import PaymentHistoryModal from '../../src/components/servicios-especiales/PaymentHistoryModal';
 import { 
   getSpecialServices, 
@@ -14,8 +14,6 @@ import type {
   SpecialService,
   NewSpecialServiceData 
 } from '../../src/services/specialService';
-import type { Client as ClientType } from '../../src/services/clientService';
-import Loader from '../../src/components/ui/Loader';
 import Modal from '../../src/components/ui/Modal';
 import SpecialServiceForm from '../../src/components/servicios-especiales/SpecialServiceForm';
 import PaymentModalLite from '../../src/components/servicios-especiales/PaymentModalLite';
@@ -24,15 +22,22 @@ import { es } from 'date-fns/locale';
 import { Table, TableContainer } from '../../src/components/ui/Table';
 import { addPayment, type NewPaymentData } from '../../src/services/paymentService';
 import { useAlert } from '../../src/contexts/AlertContext';
-import { Backend } from 'firebase/ai';
+import SystemLoader from '../../src/components/ui/SystemLoader';
+import ActionButtons from '../../src/components/ui/ActionButtons';
+import EntityActionsModal from '../../src/components/ui/EntityActionsModal';
+import ConfirmDelete from '../../src/components/ui/ConfirmDelete';
 
 function ServiciosEspecialesContent() {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [services, setServices] = useState<SpecialService[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [currentService, setCurrentService] = useState<SpecialService | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [showActionsModal, setShowActionsModal] = useState(false);
+  const { showError, showSuccess } = useAlert();
   
 
   const fetchServices = async () => {
@@ -59,6 +64,7 @@ function ServiciosEspecialesContent() {
     }
     setIsModalOpen(true);
     setIsPaymentModalOpen(false);
+    setShowActionsModal(false);
   };
 
   const handleCloseModal = () => {
@@ -71,7 +77,6 @@ function ServiciosEspecialesContent() {
     fetchServices(); // Recargar la lista de servicios
   };
 
-  const { showError } = useAlert();
   const handleRegisterPayment = async (data: { startDate: string; endDate: string; amount: number; notes: string }) => {
     if (!currentService) return;
 
@@ -87,8 +92,7 @@ function ServiciosEspecialesContent() {
 
     try {
       await addPayment(paymentData);
-      // Aquí puedes añadir una notificación de éxito
-      alert('Pago registrado exitosamente');
+      showSuccess('Pago registrado exitosamente');
       handlePaymentSuccess();
     } catch (error: any) {
       console.error('Error al registrar el pago:', error);
@@ -136,15 +140,26 @@ function ServiciosEspecialesContent() {
     }
   };
 
-  const handleDelete = async (id: number) => {    
+  const handleDelete = (id: number) => {
+    setDeleteId(id);
+    setShowDeleteConfirm(true);
+    setShowActionsModal(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      await deleteDefinitiveSpecialService(Number(id));
-      setServices(services.filter(s => s.id !== id));
+      await deleteDefinitiveSpecialService(Number(deleteId));
+      setServices(services.filter(s => s.id !== deleteId));
+      showSuccess('Servicio especial eliminado exitosamente');
     } catch (error) {
       console.error("Error al eliminar el servicio especial: ", error);
+      showError('Error al eliminar el servicio especial');
     } finally {
       setIsLoading(false);
+      setShowDeleteConfirm(false);
+      setDeleteId(null);
     }
   };
 
@@ -186,7 +201,7 @@ function ServiciosEspecialesContent() {
         )}
       >
         {isLoading ? (
-          <Loader />
+          <SystemLoader />
         ) : (
           <TableContainer>
             <Table
@@ -288,37 +303,20 @@ function ServiciosEspecialesContent() {
                   key: 'actions',
                   header: 'Acciones',
                   render: (service: SpecialService) => (
-                    <div className="flex space-x-2">                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenModal(service);
-                        }}
-                        className="text-primary-600 hover:text-primary-900"
-                        title="Editar"
-                      >
-                        <PencilIcon className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm('¿Estás seguro de que deseas eliminar permanentemente este servicio?')) {
-                            handleDelete(service.id);
-                          }
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                        title="Eliminar permanentemente"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </div>
+                    <ActionButtons
+                      onEdit={() => handleOpenModal(service)}
+                      onDelete={() => handleDelete(service.id)}
+                    />
                   ),
-                  className: 'text-right',
                 },
               ]}
               data={services}
               keyExtractor={(service) => service.id}
               searchable
+              onRowClick={(service) => {
+                setCurrentService(service);
+                setShowActionsModal(true);
+              }}
               emptyMessage="No hay servicios especiales registrados"
               rowClassName="hover:bg-gray-50 cursor-pointer"
             />
@@ -379,6 +377,59 @@ function ServiciosEspecialesContent() {
         dayOfMonth={currentService?.day_of_month || null}
         price={currentService?.price || 0}
         onPayment={handleRegisterPayment}
+      />
+      <ConfirmDelete
+        isOpen={showDeleteConfirm}
+        title="Eliminar servicio especial"
+        message='¿Estás seguro de eliminar este servicio?'
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDelete}
+        onClose={() => { setShowDeleteConfirm(false); setDeleteId(null); }}
+        loading={isLoading}
+      />
+      {/* Modal de acciones */}
+      <EntityActionsModal
+        isOpen={showActionsModal}
+        onClose={() => setShowActionsModal(false)}
+        entity={currentService}
+        title={currentService?.client.name || 'Servicio Especial'}
+        fields={[
+          {
+            key: 'description',
+            label: 'Detalles',
+            render: (value) => value || 'Sin detalles'
+          },
+          {
+            key: 'start_date',
+            label: 'Fecha de inicio',
+            render: (value) => {
+              if (!value) return 'Sin fecha';
+              const date = typeof value === 'string' ? new Date(value) : value;
+              return format(date, 'PPP', { locale: es });
+            }
+          },
+          {
+            key: 'price',
+            label: 'Precio',
+            render: (value) => `S/. ${value || 0}`
+          },
+          {
+            key: 'is_paid',
+            label: 'Estado de pago',
+            render: (value) => (
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                value 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+              {value ? 'Pagado' : 'Pendiente de pago'}
+              </span>                        
+            )
+          },
+        ]}
+        onEdit={currentService ? () => handleOpenModal(currentService) : undefined}
+        onDelete={currentService ? () => handleDelete(currentService.id) : undefined}
       />
     </>
   );

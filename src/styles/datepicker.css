@@ -1,0 +1,28 @@
+/* Estilos personalizados para react-datepicker popup con acento verde */
+.react-datepicker {
+  border: 1.5px solid #22c55e !important; /* green-600 */
+  box-shadow: 0 2px 8px rgba(34,197,94,0.08);
+  border-radius: 0.75rem !important;
+}
+
+.react-datepicker__header {
+  background-color: #f0fdf4 !important; /* green-50 */
+  border-bottom: 1px solid #22c55e !important;
+}
+
+.react-datepicker__day--selected, 
+.react-datepicker__day--keyboard-selected {
+  background-color: #22c55e !important;
+  color: #fff !important;
+  border-radius: 0.5rem !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: #bbf7d0 !important; /* green-200 */
+  color: #166534 !important; /* green-800 */
+}
+
+.react-datepicker__current-month, 
+.react-datepicker__day-name {
+  color: #16a34a !important; /* green-600 */
+}

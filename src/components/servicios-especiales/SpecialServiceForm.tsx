@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { SpecialService, NewSpecialServiceData } from '../../services/specialService';
 import type { Client } from '../../services/clientService';
 import { getClients } from '../../services/clientService';
-import Loader from '../ui/Loader';
+import SystemLoader from '../ui/SystemLoader';
 
 type FormData = Omit<NewSpecialServiceData, 'client_id'> & {
   client_id: number | '';
@@ -86,7 +86,6 @@ export default function SpecialServiceForm({
     const loadClients = async () => {
       try {
         const clientsData = await getClients();
-        console.log("clientsData", clientsData);
         setClients(clientsData);
 
         // if (clientsData.length > 0) setSelectedClientId(clientsData[0].id);
@@ -157,8 +156,6 @@ export default function SpecialServiceForm({
       day_of_week: formData.day_of_week || 'thursday',
       day_of_month: formData.day_of_month || null,
     };
-
-    console.log('Submitting form data:', dataToSubmit);
     onSubmit(dataToSubmit);
   };
 
@@ -170,7 +167,7 @@ export default function SpecialServiceForm({
             Cliente *
           </label>
           {isLoadingClients ? (
-            <Loader />
+            <SystemLoader />
           ) : (
             <select
               id="client_id"

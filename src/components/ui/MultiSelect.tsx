@@ -18,44 +18,50 @@ interface MultiSelectProps extends SelectProps<MultiSelectOption, true, GroupBas
 const customStyles: StylesConfig<MultiSelectOption, true> = {
   control: (provided, state) => ({
     ...provided,
-    minHeight: '42px',
+    minHeight: '39px',
     backgroundColor: 'white',
     borderRadius: '0.5rem', // rounded-lg
-    border: state.isFocused ? '2px solid #4f46e5' : '1px solid #d1d5db', // focus:border-primary-500, border-gray-300
-    boxShadow: state.isFocused ? '0 0 0 2px rgba(79, 70, 229, 0.2)' : 'none', // focus:ring-primary-100
+    border: state.isFocused ? '1px solid var(--tw-color-primary-600, #059669)' : '1px solid var(--tw-color-neutral-300, #d1d5db)',
+    boxShadow: state.isFocused ? '0 0 0 2px var(--tw-color-primary-100, #d1fae5)' : 'none',
     '&:hover': {
-      borderColor: state.isFocused ? '#4f46e5' : '#9ca3af',
+      borderColor: state.isFocused ? 'var(--tw-color-primary-600, #059669)' : 'var(--tw-color-neutral-400, #94a3b8)',
     },
   }),
   multiValue: (provided) => ({
     ...provided,
-    backgroundColor: '#e0e7ff', // bg-indigo-100
+    backgroundColor: 'var(--tw-color-primary-200, #a7f3d0)',
     borderRadius: '0.375rem',
   }),
   multiValueLabel: (provided) => ({
     ...provided,
-    color: '#3730a3', // text-indigo-800
+    color: 'var(--tw-color-primary-800, #065f46)',
     fontWeight: 500,
   }),
   multiValueRemove: (provided) => ({
     ...provided,
-    color: '#4338ca', // text-indigo-700
+    color: 'var(--tw-color-primary-600, #059669)',
     '&:hover': {
-      backgroundColor: '#c7d2fe', // hover:bg-indigo-200
-      color: '#312e81',
+      backgroundColor: 'var(--tw-color-primary-200, #a7f3d0)',
+      color: 'var(--tw-color-primary-800, #065f46)',
     },
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isSelected ? '#4f46e5' : state.isFocused ? '#f3f4f6' : 'white',
+    backgroundColor: state.isSelected
+      ? 'var(--tw-color-primary-600, #059669)'
+      : state.isFocused
+      ? 'var(--tw-color-primary-50, #ecfdf5)'
+      : 'white',
     color: state.isSelected ? 'white' : '#111827',
     '&:hover': {
-      backgroundColor: state.isSelected ? '#4338ca' : '#e5e7eb',
+      backgroundColor: state.isSelected
+        ? 'var(--tw-color-primary-700, #047857)'
+        : 'var(--tw-color-primary-200, #a7f3d0)',
     },
   }),
   placeholder: (provided) => ({
     ...provided,
-    color: '#6b7280', // placeholder-gray-500
+    color: 'var(--tw-color-neutral-500, #64748b)',
   }),
 };
 

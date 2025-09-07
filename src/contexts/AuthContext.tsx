@@ -36,8 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await userService.login({ email, password });
-    
-    console.log('usuario logueado', response);
   
     if (response.success) {
       setCurrentUser(response.user);

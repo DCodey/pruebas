@@ -76,7 +76,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose, i
     if (Number(formData.sale_price) <= 0) {
       newErrors.sale_price = 'El precio de venta debe ser mayor a 0';
     } else if (Number(formData.sale_price) < Number(formData.price_cost)) {
-      console.log(formData.sale_price, formData.price_cost);
       newErrors.sale_price = 'El precio de venta no puede ser menor al costo';
     }
 

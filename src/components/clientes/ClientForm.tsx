@@ -45,10 +45,10 @@ export default function ClientForm({ client, onSubmit, onClose }: ClientFormProp
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const clientData: Omit<Client, 'id'> = {
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      phone: formData.phone,
-      ...(formData.document_number && { document_number: formData.document_number.trim() })
+      name: formData?.name?.trim(),
+      description: formData?.description?.trim(),
+      phone: formData?.phone,
+      ...(formData?.document_number && { document_number: formData?.document_number?.trim() })
     };
     onSubmit(clientData);
   };
@@ -60,7 +60,7 @@ export default function ClientForm({ client, onSubmit, onClose }: ClientFormProp
             id="name"
             name="name"
             label="Nombre del Cliente *"
-            value={formData.name}
+            value={formData?.name}
             onChange={handleChange}
             required
           />
@@ -68,7 +68,7 @@ export default function ClientForm({ client, onSubmit, onClose }: ClientFormProp
             id="phone"
             name="phone"
             label="Celular"
-            value={formData.phone || ''}
+            value={formData?.phone || ''}
             onChange={handleChange}
           />
           <Input
@@ -76,7 +76,7 @@ export default function ClientForm({ client, onSubmit, onClose }: ClientFormProp
             name="document_number"
             label="Número de Documento"
             placeholder="DNI o RUC"
-            value={formData.document_number}
+            value={formData?.document_number}
             onChange={handleChange}
           />
           <Input
@@ -84,7 +84,7 @@ export default function ClientForm({ client, onSubmit, onClose }: ClientFormProp
             id="description"
             name="description"
             label="Descripción"
-            value={formData.description}
+            value={formData?.description}
             onChange={handleChange}
             rows={4}
           />

@@ -2,16 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { getCompanyData, updateCompanyData } from '../../services/companyService';
 import type { CompanyData } from '../../services/companyService';
 import { useAlert } from '../../contexts/AlertContext';
+import SystemLoader from '../../components/ui/SystemLoader';
 
 const CompanyDataSection: React.FC = () => {
   const [data, setData] = useState<CompanyData>({
     app_name: '',
-    app_description: '',
-    company_name: '',
-    company_address: '',
-    company_phone: '',
-    company_email: '',
-    company_document: '',
+    app_description: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,7 +30,7 @@ const CompanyDataSection: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setData({ ...data, [e.target.name]: e.target.value });
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +39,8 @@ const CompanyDataSection: React.FC = () => {
     try {
       await updateCompanyData(data);
       showSuccess('Datos guardados correctamente');
+      localStorage.setItem('companyData', JSON.stringify(data));
+      window.location.reload();
     } catch (e) {
       showError('No se pudo guardar');
       console.error(e);
@@ -52,37 +50,53 @@ const CompanyDataSection: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6 border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6 border border-gray-100 relative">
       <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-primary-700">
-        <span>🏢</span> Datos de la compañía
+        <span>🖥️</span> Info de sistema
       </h2>
       {loading ? (
-        <div className="text-primary-600">Cargando...</div>
+        <SystemLoader />
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold mb-1">Nombre de la empresa *</label>
-            <input name="company_name" value={data.company_name ?? ''} onChange={handleChange} className="border border-gray-300 rounded-lg px-3 py-2 w-full" required />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre de la aplicación *</label>
+            <input
+              name="app_name"
+              value={data.app_name ?? ''}
+              onChange={handleChange}
+              placeholder="Ejemplo: Amin Flowers"
+              className="border border-primary-200 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm shadow-sm"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">Este nombre se muestra en el menú lateral y en los bauchers</p>
           </div>
-          <div>
-            <label className="block text-sm font-semibold mb-1">Dirección *</label>
-            <input name="company_address" value={data.company_address ?? ''} onChange={handleChange} className="border border-gray-300 rounded-lg px-3 py-2 w-full" required />
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Descripción de la aplicación *</label>
+            <input
+              name="app_description"
+              value={data.app_description ?? ''}
+              onChange={handleChange}
+              placeholder="Breve descripción de la empresa"
+              className="border border-primary-200 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm shadow-sm"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">Esta descripción se muestra en los bauchers.</p>
           </div>
-          <div>
-            <label className="block text-sm font-semibold mb-1">Teléfono</label>
-            <input name="company_phone" value={data.company_phone ?? ''} onChange={handleChange} className="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+          <div className="flex gap-2 items-center mt-2">
+            <button
+              type="submit"
+              className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg shadow transition disabled:opacity-60"
+              disabled={saving}
+            >
+              {saving ? <span className="flex items-center gap-2">Guardando...</span> : 'Guardar'}
+            </button>
           </div>
-          <div>
-            <label className="block text-sm font-semibold mb-1">Correo electrónico</label>
-            <input name="company_email" value={data.company_email ?? ''} onChange={handleChange} className="border border-gray-300 rounded-lg px-3 py-2 w-full" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold mb-1">RUC</label>
-            <input name="company_document" value={data.company_document ?? ''} onChange={handleChange} className="border border-gray-300 rounded-lg px-3 py-2 w-full" />
-          </div>
-          <div className="flex gap-2 items-center">
-            <button type="submit" className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg shadow transition disabled:opacity-60" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</button>
-          </div>
+          {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+          {saving && (
+            <div className="absolute inset-0 bg-white bg-opacity-60 flex items-center justify-center z-10">
+              <SystemLoader />
+            </div>
+          )}
         </form>
       )}
     </div>

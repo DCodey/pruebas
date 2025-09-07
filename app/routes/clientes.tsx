@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import { getClients, addClient, updateClient, deleteClient, type Client } from '../../src/services/clientService';
-import Loader from '../../src/components/ui/Loader';
+import SystemLoader from '../../src/components/ui/SystemLoader';
 import Modal from '../../src/components/ui/Modal';
 import ClientForm from '../../src/components/clientes/ClientForm';
+import EntityActionsModal from '../../src/components/ui/EntityActionsModal';
 import { Table, TableContainer } from '../../src/components/ui/Table';
 import ConfirmDelete from '../../src/components/ui/ConfirmDelete';
 import { useAlert } from '../../src/contexts/AlertContext';
+import ActionButtons from '../../src/components/ui/ActionButtons';
 
 function ClientesContent() {
   const { showError, showSuccess } = useAlert();
@@ -18,7 +20,7 @@ function ClientesContent() {
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [showActionsModal, setShowActionsModal] = useState(false);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -37,33 +39,32 @@ function ClientesContent() {
     fetchClients();
   }, []);
 
-  const handleOpenModal = (client: Client | null = null) => {
-    if (client) {
-      setCurrentClient({
-        ...client,
-        name: client.name || '',
-        description: client.description || '',
-        phone: client.phone || '',
-        document_number: client.document_number
-      });
-    } else {
-      setCurrentClient(null);
-    }
+  const handleAddClient = () => {
+    setCurrentClient(null);
     setIsModalOpen(true);
+  };
+
+  const handleEditClient = (client: Client) => {
+    setCurrentClient({
+      ...client,
+      name: client.name || '',
+      description: client.description || '',
+      phone: client.phone || '',
+      document_number: client.document_number || ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClient = (client: Client) => {
+    setShowActionsModal(false);
+    setDeleteId(client.id);
+    setShowDeleteConfirm(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setCurrentClient(null);
   };
-
-  interface ClientFormData {
-    nombre: string;
-    descripcion: string;
-    celular: number;
-    numeroDocumento?: string;
-  }
-  const filteredClients = clients.filter(client => { const term = searchTerm.toLowerCase(); return ( client.name?.toLowerCase().includes(term) || client.description?.toLowerCase().includes(term) || client.phone?.toLowerCase().includes(term) || client.document_number?.toLowerCase().includes(term) ); });
 
   const handleSaveClient = async (formData: Omit<Client, 'id'>) => {
     setIsLoading(true);
@@ -92,10 +93,7 @@ function ClientesContent() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    setDeleteId(id);
-    setShowDeleteConfirm(true);
-  };
+  // handleDelete ya no es necesario, se usa handleDeleteClient
 
   const confirmDelete = async () => {
     if (!deleteId) return;
@@ -144,7 +142,7 @@ function ClientesContent() {
         headerAction={(
           <button
             type="button"
-            onClick={() => handleOpenModal(null)}
+            onClick={() => handleAddClient()}
             className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
@@ -152,7 +150,6 @@ function ClientesContent() {
           </button>
         )}
       >
-        {isLoading && <Loader />}
         <TableContainer>
           <Table
             columns={[
@@ -184,38 +181,53 @@ function ClientesContent() {
                 key: 'actions',
                 header: 'Acciones',
                 className: 'text-right',
-                render: (client) => (
-                  <div className="space-x-2">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenModal(client);
-                      }} 
-                      className="text-primary-600 hover:text-primary-900"
-                    >
-                      <PencilIcon className="h-5 w-5"/>
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(client.id);
-                      }} 
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <TrashIcon className="h-5 w-5"/>
-                    </button>
-                  </div>
+                render: (client: Client) => (
+                  <ActionButtons
+                    onEdit={() => handleEditClient(client)}
+                    onDelete={() => handleDeleteClient(client)}
+                  />
                 )
               }
             ]}
-            data={filteredClients}
+            data={clients}
             searchable
             keyExtractor={(client) => client.id}
-            onRowClick={handleOpenModal}
+            onRowClick={(client) => {
+              setCurrentClient(client);
+              setShowActionsModal(true);
+            }}
             emptyMessage="No hay clientes registrados"
             rowClassName="hover:bg-gray-50 cursor-pointer"
           />
         </TableContainer>
+
+        {/* Modal de acciones */}
+        <EntityActionsModal
+          isOpen={showActionsModal}
+          onClose={() => setShowActionsModal(false)}
+          entity={currentClient}
+          title={currentClient?.name || 'Cliente'}
+          fields={[
+            {
+              key: 'phone',
+              label: 'Teléfono',
+              render: (value) => value || 'Sin teléfono'
+            },
+            {
+              key: 'document_number',
+              label: 'Documento',
+              render: (value) => value || 'Sin documento'
+            },
+            {
+              key: 'description',
+              label: 'Notas',
+              render: (value) => value || 'Sin notas',
+              className: 'mt-2'
+            }
+          ]}
+          onEdit={currentClient ? () => handleEditClient(currentClient) : undefined}
+          onDelete={currentClient ? () => handleDeleteClient(currentClient) : undefined}
+        />
       </PageLayout>
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={currentClient ? 'Editar Cliente' : 'Registrar Cliente'}
@@ -227,15 +239,15 @@ function ClientesContent() {
         />
       </Modal>
       <ConfirmDelete
-        open={showDeleteConfirm}
+        isOpen={showDeleteConfirm}
         title="Eliminar cliente"
         message="¿Estás seguro de eliminar este cliente?"
         confirmText="Eliminar"
         cancelText="Cancelar"
         onConfirm={confirmDelete}
-        onCancel={() => { setShowDeleteConfirm(false); setDeleteId(null); }}
+        onClose={() => { setShowDeleteConfirm(false); setDeleteId(null); }}
       />
-      {isLoading && ( <Loader /> )}
+  {isLoading && ( <SystemLoader /> )}
     </>
   );
 }

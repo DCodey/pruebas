@@ -1,23 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import { getProducts, addProduct, updateProduct, deleteProduct, type Product } from '../../src/services/productService';
 import Modal from '../../src/components/ui/Modal';
 import ProductForm from '../../src/components/productos/ProductForm';
 import { Table, TableContainer } from '../../src/components/ui/Table';
 import { useAlert } from '../../src/contexts/AlertContext';
-import Loader from '../../src/components/ui/Loader';
 import ConfirmDelete from '../../src/components/ui/ConfirmDelete';
+import SystemLoader from 'src/components/ui/SystemLoader';
+import ActionButtons from 'src/components/ui/ActionButtons';
+import EntityActionsModal from 'src/components/ui/EntityActionsModal';
 
 function ProductosContent() {
   const { showError, showSuccess } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<Number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
+  const [showActionsModal, setShowActionsModal] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -39,6 +42,7 @@ function ProductosContent() {
   const handleOpenModal = (product: Product | null = null) => {
     setCurrentProduct(product);
     setIsModalOpen(true);
+    setShowActionsModal(false);
   };
 
   const handleCloseModal = () => {
@@ -67,9 +71,10 @@ function ProductosContent() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: Number) => {
     setDeleteId(id);
     setShowDeleteConfirm(true);
+    setShowActionsModal(false);
   };
 
   const confirmDelete = async () => {
@@ -108,7 +113,7 @@ function ProductosContent() {
         disabled={isLoading}
       >
         {isLoading ? (
-          <Loader />
+          <SystemLoader />
         ) : (
           currentProduct ? (
             'Actualizar Producto'
@@ -135,86 +140,66 @@ function ProductosContent() {
         </button>
       }
     >
-      <div className="relative">
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
-            <Loader />
-          </div>
-        )}
-        <TableContainer>
-          <Table
-            columns={[
-              {
-                key: 'name',
-                header: 'Nombre',
-                className: 'font-medium text-gray-900'
-              },
-              {
-                key: 'description',
-                header: 'Descripción',
-                className: 'text-gray-500 max-w-[200px] overflow-hidden text-ellipsis'
-              },
-              {
-                key: 'price_cost',
-                header: 'Precio Costo',
-                className: 'text-gray-500',
-                render: (product) => `${product.price_cost || '0.00'}`
-              },
-              {
-                key: 'sale_price',
-                header: 'Precio Venta',
-                className: 'text-gray-500',
-                render: (product) => `${product.sale_price || '0.00'}`
-              },
-              {
-                key: 'stock',
-                header: 'Stock',
-                className: 'text-gray-500',
-                render: (product) => (
-                  <span className={`px-2 py-1 text-xs rounded-full ${product.stock !== null && product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {product.stock !== null ? product.stock + ' unidades' : 'Ilimitado'}
-                  </span>
-                )
-              },
-              {
-                key: 'actions',
-                header: 'Acciones',
-                className: 'text-right',
-                render: (product) => (
-                  <div className="space-x-2">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenModal(product);
-                      }} 
-                      className="text-primary-600 hover:text-primary-900"
-                      title="Editar"
-                    >
-                      <PencilIcon className="h-5 w-5"/>
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(product.id.toString());
-                      }} 
-                      className="text-red-600 hover:text-red-900"
-                      title="Eliminar"
-                    >
-                      <TrashIcon className="h-5 w-5"/>
-                    </button>
-                  </div>
-                )
-              }
-            ]}
-            data={products}
-            keyExtractor={(product) => product.id}
-            onRowClick={handleOpenModal}
-            searchable
-            emptyMessage="No hay productos registrados"
-            rowClassName="hover:bg-gray-50 cursor-pointer"
-          />
-        </TableContainer>
-      </div>
+      <TableContainer>
+        <Table
+          columns={[
+            {
+              key: 'name',
+              header: 'Nombre',
+              className: 'font-medium text-gray-900'
+            },
+            {
+              key: 'description',
+              header: 'Descripción',
+              className: 'text-gray-500 max-w-[200px] overflow-hidden text-ellipsis'
+            },
+            {
+              key: 'price_cost',
+              header: 'Precio Costo',
+              className: 'text-gray-500',
+              render: (product) => `${product.price_cost || '0.00'}`
+            },
+            {
+              key: 'sale_price',
+              header: 'Precio Venta',
+              className: 'text-gray-500',
+              render: (product) => `${product.sale_price || '0.00'}`
+            },
+            {
+              key: 'stock',
+              header: 'Stock',
+              className: 'text-gray-500',
+              render: (product) => (
+                <span className={`px-2 py-1 text-xs rounded-full ${product.stock !== null && product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {product.stock !== null ? product.stock + ' unidades' : 'Ilimitado'}
+                </span>
+              )
+            },
+            {
+              key: 'actions',
+              header: 'Acciones',
+              className: 'text-right',
+              render: (product) => (
+                <ActionButtons
+                  onEdit={() => handleOpenModal(product)}
+                  onDelete={() => handleDelete((product.id))}
+                />
+              )
+            }
+          ]}
+          data={products}
+          keyExtractor={(product) => product.id}
+          onRowClick={
+            (product) => {
+              setCurrentProduct(product);
+              setShowActionsModal(true);
+            }
+          }
+          searchable
+          emptyMessage="No hay productos registrados"
+          rowClassName="hover:bg-gray-50 cursor-pointer"
+        />
+      </TableContainer>     
 
       <Modal 
         isOpen={isModalOpen} 
@@ -230,16 +215,48 @@ function ProductosContent() {
         />
       </Modal>
 
-       <ConfirmDelete
-        open={showDeleteConfirm}
-        title="Eliminar Producto"
-        message="¿Estás seguro de eliminar este producto?"
+      <ConfirmDelete
+        isOpen={showDeleteConfirm}
+        title="Eliminar producto"
+        message='¿Estás seguro de eliminar este producto?'
         confirmText="Eliminar"
         cancelText="Cancelar"
         onConfirm={confirmDelete}
-        onCancel={() => { setShowDeleteConfirm(false); setDeleteId(null); }}
+        onClose={() => { setShowDeleteConfirm(false); setDeleteId(null); }}
+        loading={isLoading}
       />
-      {isLoading && ( <Loader /> )}
+      {/* Modal de acciones */}
+      <EntityActionsModal
+        isOpen={showActionsModal}
+        onClose={() => setShowActionsModal(false)}
+        entity={currentProduct}
+        title={currentProduct?.name || 'Producto'}
+        fields={[
+          {
+            key: 'description',
+            label: 'Descripción',
+            render: (value) => value || 'Sin descripción'
+          },
+          {
+            key: 'price_cost',
+            label: 'Precio Costo',
+            render: (value) => value ? `${value}` : '0.00'
+          },
+          {
+            key: 'sale_price',
+            label: 'Precio Venta',
+            render: (value) => value ? `${value}` : '0.00'
+          },
+          {
+            key: 'stock',
+            label: 'Stock',
+            render: (value) => value !== null ? `${value} unidades` : 'Ilimitado'
+          }
+        ]}
+        onEdit={currentProduct ? () => handleOpenModal(currentProduct) : undefined}
+        onDelete={currentProduct ? () => handleDelete((currentProduct.id)) : undefined}        
+      />
+      {isLoading && ( <SystemLoader /> )}
     </PageLayout>
   );
 }

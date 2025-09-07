@@ -2,6 +2,7 @@ import { useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Loader from '../ui/Loader';
 import Unauthorized from '../ui/Unauthorized';
+import SystemLoader from '../ui/SystemLoader';
 
 export default function ProtectedRoute() {
   const [tokenExists, setTokenExists] = useState<boolean | null>(null); // null = aún no verificado
@@ -18,7 +19,7 @@ export default function ProtectedRoute() {
   if (tokenExists === null) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <Loader />
+        <SystemLoader />
       </div>
     );
   }

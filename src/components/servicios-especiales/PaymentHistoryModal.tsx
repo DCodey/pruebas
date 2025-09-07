@@ -4,7 +4,7 @@ import { getSpecialServiceById } from '../../services/specialService';
 import Modal from '../ui/Modal';
 import type { Payment } from '../../services/paymentService';
 import { getPayments } from '../../services/paymentService';
-import Loader from '../ui/Loader';
+import SystemLoader from '../ui/SystemLoader';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatDateToDisplay } from 'src/utils/dateUtils';
@@ -79,7 +79,7 @@ export default function PaymentHistoryModal({
             <div className="mt-2">
               {isLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader />
+                  <SystemLoader />
                 </div>
               ) : error ? (
                 <div className="rounded-md bg-red-50 p-4">

@@ -6,10 +6,10 @@ import { es } from 'date-fns/locale';
 import { DocumentArrowDownIcon } from '@heroicons/react/24/solid';
 import type { Payment } from '../../services/paymentService';
 import type { SpecialService } from '../../services/specialService';
-import { COMPANY, getRecurrenceLabel } from '../../utils/constants';
 import { calculatePaymentPeriodsAndAmount } from '../../utils/paymentUtils';
 import { formatDateToDisplay } from 'src/utils/dateUtils';
 import { generateDisplayCode } from 'src/utils/helper';
+import { useCompany } from 'src/contexts/CompanyContext';
 
 interface PaymentReceiptModalProps {
   isOpen: boolean;
@@ -20,6 +20,8 @@ interface PaymentReceiptModalProps {
 
 const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClose, payment, service }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const { data: company } = useCompany();
+
   if (!payment || !service) return null;
 
   const formatDate = (dateString: string) => {
@@ -64,8 +66,8 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClo
       <div ref={receiptRef} className="bg-gray-50 max-w-xs mx-auto p-6 font-mono print:p-0 print:shadow-none" style={{ WebkitPrintColorAdjust: 'exact' }}>
         {/* Header */}
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold">{COMPANY.name}</h2>
-          <p className="text-xs text-gray-600">{COMPANY.description}</p>
+          <h2 className="text-xl font-bold">{company?.app_name}</h2>
+          <p className="text-xs text-gray-600">{company?.app_description}</p>
           <p className="text-xs mt-1">--------------------------------</p>
         </div>
         {/* Info */}
@@ -111,9 +113,6 @@ const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({ isOpen, onClo
         <div className="mt-6 text-center text-xs text-gray-500">
           <p>¡Gracias por su pago!</p>
           <p className="mt-1">*** Pago no reembolsable ***</p>
-          <p className="mt-4 text-[10px]">
-          © {new Date().getFullYear()} {COMPANY.footer}
-          </p>
         </div>
       </div>
     </Modal>

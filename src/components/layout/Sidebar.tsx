@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeftStartOnRectangleIcon } from '@heroicons/react/24/outline';
 import { ROUTES } from '../../routes/paths';
-import { COMPANY } from '../../utils/constants';
+import { useCompany } from '../../contexts/CompanyContext';
 
 
 const navigation = [
@@ -9,7 +9,7 @@ const navigation = [
     { name: 'Ventas', href: ROUTES.VENTAS, icon: '💵' },
     { name: 'Clientes', href: ROUTES.CLIENTES, icon: '👥' },
     { name: 'Productos', href: ROUTES.PRODUCTOS, icon: '📦' },
-    { name: 'Servicios Especiales', href: ROUTES.SERVICIOS_ESPECIALES, icon: '🛠️' },
+    { name: 'Servicios Especiales', href: ROUTES.SERVICIOS_ESPECIALES, icon: '💼' },
     { name: 'Configuración', href: ROUTES.CONFIGURACION, icon: '⚙️' },
 ];
 
@@ -21,6 +21,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onToggle, onLogout }: SidebarProps) {
     const location = useLocation();
+    const { data: company } = useCompany();
 
     // Cerrar el menú al hacer clic en un enlace (solo en móvil)
     const handleNavClick = () => {
@@ -45,7 +46,7 @@ export function Sidebar({ isOpen, onToggle, onLogout }: SidebarProps) {
                 <div className="flex-1 flex flex-col border-2 border-gray-100 md:m-2 bg-secondary-50 shadow-lg md:rounded-2xl h-screen">
                     {/* Header del Sidebar con botón de cerrar en móvil */}
                     <div className="flex items-center justify-between border-b px-4 py-3">
-                        <h1 className="text-primary-800 text-xl font-bold">🌸{COMPANY.name}</h1>
+                            <h1 className="text-primary-800 text-xl font-bold">🌸{company?.app_name || ''}</h1>
                         <button
                             onClick={onToggle}
                             className="md:hidden text-gray-500 hover:text-gray-700 pl-2 rounded-full bg-secondary-50"
@@ -64,7 +65,7 @@ export function Sidebar({ isOpen, onToggle, onLogout }: SidebarProps) {
                                     onClick={handleNavClick}
                                     className={`${location.pathname === item.href
                                         ? 'bg-primary-100 text-primary-600'
-                                        : 'text-primary-600 hover:bg-primary-100'
+                                        : 'text-primary-600 hover:bg-gray-200'
                                         } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
                                 >
                                     <span className="mr-3 text-lg">{item.icon}</span>

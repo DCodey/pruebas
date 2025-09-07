@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import Modal from './Modal';
 import html2canvas from 'html2canvas';
 import { DocumentArrowDownIcon } from '@heroicons/react/24/solid';
-import { COMPANY } from 'src/utils/constants';
+import { useCompany } from 'src/contexts/CompanyContext';
 
 interface VoucherBaseProps {
   isOpen: boolean;
@@ -33,6 +33,8 @@ const VoucherBase: React.FC<VoucherBaseProps> = ({
 }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
 
+  const { data: companny } = useCompany();
+
   const handleDownloadReceipt = async () => {
     if (!receiptRef.current) return;
     const canvas = await html2canvas(receiptRef.current, { scale: 3, backgroundColor: '#fff' });
@@ -57,8 +59,8 @@ const VoucherBase: React.FC<VoucherBaseProps> = ({
       <div ref={receiptRef} className="bg-gray-50 max-w-xs mx-auto p-6 font-mono print:p-0 print:shadow-none" style={{ WebkitPrintColorAdjust: 'exact' }}>
         {/* Header */}
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold">{COMPANY.name}</h2>
-          <p className="text-xs text-gray-600">{headerNote || COMPANY.description}</p>
+          <h2 className="text-xl font-bold">{companny?.app_name}</h2>
+          <p className="text-xs text-gray-600">{headerNote || companny?.app_description}</p>
           <p className="text-xs mt-1">--------------------------------</p>
         </div>
         {/* Info */}
@@ -89,10 +91,7 @@ const VoucherBase: React.FC<VoucherBaseProps> = ({
         {/* Footer */}
         <div className="mt-6 text-center text-xs text-gray-500">
           <p>{footerNote || '¡Gracias por su preferencia!'}</p>
-          <p className="mt-1">*** No reembolsable ***</p>
-          <p className="mt-4 text-[10px]">
-          © {new Date().getFullYear()} {COMPANY.footer}
-          </p>
+          <p className="mt-1">*** No reembolsable ***</p>          
         </div>
       </div>
     </Modal>

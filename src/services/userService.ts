@@ -21,7 +21,6 @@ export const userService = {
         `${API_URL}/check-user`,
         credentials
       );
-      console.log("respuesta api de login",response.data);
       
       // Si la autenticación es exitosa, guardamos el token
       if (response.data.token) {

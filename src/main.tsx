@@ -2,9 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
-import { CompanyProvider } from './contexts/CompanyContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { CompanyProvider } from './contexts/CompanyContext';
 import '../app/app.css';
+import '../src/styles/datepicker.css';
 
 // Creamos el enrutador fuera del renderizado
 const router = createBrowserRouter([

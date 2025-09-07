@@ -9,7 +9,7 @@ import {
 } from '../../utils/dateUtils';
 import Input from '../ui/Input';
 import { TrashIcon } from '@heroicons/react/24/outline';
-import Loader from '../ui/Loader';
+import SystemLoader from '../ui/SystemLoader';
 
 interface SaleFormProps {
   onSubmit: (formData: NewSaleData) => void;
@@ -181,7 +181,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-        <Loader />
+  <SystemLoader />
       </div>
     );
   }
