@@ -117,6 +117,9 @@ export const userService = {
   },
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
+      // 1. Obtener cookie CSRF de Sanctum
+      await axios.get(`${API_URL}/sanctum/csrf-cookie`, { withCredentials: true });
+
       const response = await axios.post<LoginResponse>(
         `${API_URL}/check-user`,
         credentials
