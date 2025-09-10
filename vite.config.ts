@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  base: '/',
+  base: '/pruebas/',
   plugins: [tsconfigPaths()],
   appType: 'spa',
   server: {
