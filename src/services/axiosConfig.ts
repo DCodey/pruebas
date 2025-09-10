@@ -30,7 +30,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       console.warn('Token expirado o no autorizado. Cerrando sesión...');
       userService.logout();
-      window.location.href = ROUTES.LOGIN;
+      window.location.href = ROUTES.LOGIN.path;
     }
 
     // Puedes manejar otros códigos de error aquí si quieres
