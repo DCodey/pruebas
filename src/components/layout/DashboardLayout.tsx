@@ -27,7 +27,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="bg-secondary-50">
+    <div className="md:bg-secondary-50">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -53,7 +53,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Contenido */}
-        <main id="main-content" className="md:rounded-2xl w-full bg-white p-3 md:p-0 h-[calc(100dvh-10px)] shadow-sm">
+        <main id="main-content" className="md:rounded-2xl w-full md:bg-white p-3 md:p-0 h-[calc(100dvh-10px)] md:shadow-md md:border border-gray-100">
           <div className=" ">
             {children}
           </div>

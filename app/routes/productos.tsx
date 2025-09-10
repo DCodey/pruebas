@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { PERMISSIONS } from 'src/utils/permissions';
 import { getProducts, addProduct, updateProduct, deleteProduct, type Product } from '../../src/services/productService';
 import Modal from '../../src/components/ui/Modal';
 import ProductForm from '../../src/components/productos/ProductForm';
@@ -11,6 +12,8 @@ import ConfirmDelete from '../../src/components/ui/ConfirmDelete';
 import SystemLoader from 'src/components/ui/SystemLoader';
 import ActionButtons from 'src/components/ui/ActionButtons';
 import EntityActionsModal from 'src/components/ui/EntityActionsModal';
+import { withPermission } from 'src/hoc/withPermission';
+import { useHasPermission } from 'src/hoc/useHasPermission';
 
 function ProductosContent() {
   const { showError, showSuccess } = useAlert();
@@ -21,6 +24,9 @@ function ProductosContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [showActionsModal, setShowActionsModal] = useState(false);
+  const canCreateProduct = useHasPermission(PERMISSIONS.PRODUCT_CREATE.key);
+  const canEditProduct = useHasPermission(PERMISSIONS.PRODUCT_EDIT.key);
+  const canDeleteProduct = useHasPermission(PERMISSIONS.PRODUCT_DELETE.key);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -130,6 +136,7 @@ function ProductosContent() {
       title="Productos" 
       description="Administra los productos de tu inventario"
       headerAction={
+        canCreateProduct && (
         <button
           type="button"
           onClick={() => handleOpenModal()}
@@ -138,7 +145,7 @@ function ProductosContent() {
           <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
           Nuevo Producto
         </button>
-      }
+        )}
     >
       <TableContainer>
         <Table
@@ -175,17 +182,21 @@ function ProductosContent() {
                 </span>
               )
             },
-            {
-              key: 'actions',
-              header: 'Acciones',
-              className: 'text-right',
-              render: (product) => (
+            ...(canEditProduct || canDeleteProduct ? [
+              {
+                key: 'actions',
+                header: 'Acciones',
+                className: 'text-right',
+                render: (product: Product) => (
                 <ActionButtons
                   onEdit={() => handleOpenModal(product)}
                   onDelete={() => handleDelete((product.id))}
+                  editPermission={PERMISSIONS.PRODUCT_EDIT.key}
+                  deletePermission={PERMISSIONS.PRODUCT_DELETE.key}
                 />
-              )
-            }
+                )
+              }
+            ] : [])
           ]}
           data={products}
           keyExtractor={(product) => product.id}
@@ -231,6 +242,9 @@ function ProductosContent() {
         onClose={() => setShowActionsModal(false)}
         entity={currentProduct}
         title={currentProduct?.name || 'Producto'}
+        viewPermission={PERMISSIONS.PRODUCT_VIEW.key}
+        editPermission={PERMISSIONS.PRODUCT_EDIT.key}
+        deletePermission={PERMISSIONS.PRODUCT_DELETE.key}
         fields={[
           {
             key: 'description',
@@ -261,10 +275,12 @@ function ProductosContent() {
   );
 }
 
-export default function Productos() {
+export function Productos() {
   return (
     <DashboardLayout>
       <ProductosContent />
     </DashboardLayout>
   );
 }
+
+export default withPermission(Productos, PERMISSIONS.PRODUCT_VIEW.key);

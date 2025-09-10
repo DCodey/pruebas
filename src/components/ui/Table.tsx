@@ -81,29 +81,29 @@ export function Table<T>({
         [scrollbar-width:thin] 
         [scrollbar-color:#9ca3af_#f3f4f6] 
         [&::-webkit-scrollbar]:w-2 
-      [&::-webkit-scrollbar-track]:bg-gray-100 
-      [&::-webkit-scrollbar-thumb]:bg-gray-400 
+        [&::-webkit-scrollbar-track]:bg-gray-100 
+        [&::-webkit-scrollbar-thumb]:bg-gray-400 
         [&::-webkit-scrollbar-thumb]:rounded-md">
         <table className={`min-w-full divide-y divide-gray-200 ${className}`}>
-          <thead className="bg-gray-50">
+          <thead className="bg-primary-500">
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
                   scope="col"
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.className || ''} ${headerClassName}`}
+                  className={`px-6 py-3 text-left text-xs font-bold text-primary-50 uppercase tracking-wider ${column.className || ''} ${headerClassName}`}
                 >
                   {column.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-gray-[#d9d9d9] divide-y divide-gray-200">
             {filteredData.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-6 py-4 text-center text-sm text-gray-500"
+                  className="px-6 py-4 text-center text-sm text-primary-50"
                 >
                   {emptyMessage}
                 </td>
@@ -112,7 +112,7 @@ export function Table<T>({
               filteredData.map((item) => (
                 <tr
                   key={keyExtractor(item)}
-                  className={`${onRowClick ? 'hover:bg-gray-50 cursor-pointer ' : ''}${rowClassName}`}
+                  className={`${onRowClick ? 'hover:bg-primary-50 cursor-pointer ' : ''}${rowClassName}`}
                   onClick={() => onRowClick?.(item)}
                 >
                   {columns.map((column) => (

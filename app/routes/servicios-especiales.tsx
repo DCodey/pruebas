@@ -2,17 +2,18 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
 import { PlusIcon, CreditCardIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
+import { PERMISSIONS } from 'src/utils/permissions';
 import PaymentHistoryModal from '../../src/components/servicios-especiales/PaymentHistoryModal';
-import { 
-  getSpecialServices, 
-  addSpecialService, 
-  updateSpecialService, 
+import {
+  getSpecialServices,
+  addSpecialService,
+  updateSpecialService,
   deleteDefinitiveSpecialService
 } from '../../src/services/specialService';
 
-import type { 
+import type {
   SpecialService,
-  NewSpecialServiceData 
+  NewSpecialServiceData
 } from '../../src/services/specialService';
 import Modal from '../../src/components/ui/Modal';
 import SpecialServiceForm from '../../src/components/servicios-especiales/SpecialServiceForm';
@@ -26,6 +27,7 @@ import SystemLoader from '../../src/components/ui/SystemLoader';
 import ActionButtons from '../../src/components/ui/ActionButtons';
 import EntityActionsModal from '../../src/components/ui/EntityActionsModal';
 import ConfirmDelete from '../../src/components/ui/ConfirmDelete';
+import { useHasPermission } from 'src/hoc/useHasPermission';
 
 function ServiciosEspecialesContent() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -38,7 +40,10 @@ function ServiciosEspecialesContent() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [showActionsModal, setShowActionsModal] = useState(false);
   const { showError, showSuccess } = useAlert();
-  
+  const canCreateService = useHasPermission(PERMISSIONS.SPECIAL_SERVICE_CREATE.key);
+  const canDeleteService = useHasPermission(PERMISSIONS.SPECIAL_SERVICE_DELETE.key);
+  const canViewPayment = useHasPermission(PERMISSIONS.PAYMENT_VIEW.key);
+  const canCreatePayment = useHasPermission(PERMISSIONS.PAYMENT_CREATE.key);
 
   const fetchServices = async () => {
     try {
@@ -189,16 +194,17 @@ function ServiciosEspecialesContent() {
       <PageLayout
         title="Servicios Especiales"
         description="Una lista de todos los servicios especiales."
-        headerAction={(
-          <button
-            type="button"
-            onClick={() => handleOpenModal()}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
-          >
-            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-            Registrar Servicio Especial
-          </button>
-        )}
+        headerAction={
+          canCreateService && (
+            <button
+              type="button"
+              onClick={() => handleOpenModal()}
+              className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
+            >
+              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+              Registrar Servicio Especial
+            </button>
+          )}
       >
         {isLoading ? (
           <SystemLoader />
@@ -253,62 +259,71 @@ function ServiciosEspecialesContent() {
                       S/. {service.price}
                     </div>
                   )
-                },               
+                },
                 {
                   key: 'status',
                   header: 'Estado de pago',
                   render: (service: SpecialService) => (
-                      <div className="flex items-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          service.is_paid 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
+                    <div className="flex items-center">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${service.is_paid
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
                         }`}>
                         {service.is_paid ? 'Pagado' : 'Pendiente de pago'}
-                        </span>                        
-                      </div>
-                    )
-                },             
+                      </span>
+                    </div>
+                  )
+                },
                 {
                   key: 'payment',
                   header: 'Acción de Pago',
                   render: (service: SpecialService) => (
                     <div className="flex items-center space-x-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCurrentService(service);
-                          setIsHistoryModalOpen(true);
-                        }}
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        title="Ver historial de pagos"
-                      >
-                        <ClipboardDocumentCheckIcon className="-ml-1 mr-1 h-4 w-4" />Historial
-                      </button>
-                      <button
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        title="Registrar pago"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCurrentService(service)
-                          setIsPaymentModalOpen(true)
-                        }}
-                      >
-                        <CreditCardIcon className="-ml-1 mr-1 h-4 w-4" />Pagar
-                      </button>
+                      {canViewPayment && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentService(service);
+                            setIsHistoryModalOpen(true);
+                          }}
+                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-gray-50 border border-gray-300 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          title="Ver historial de pagos"
+                        >
+                          <ClipboardDocumentCheckIcon className="-ml-1 mr-1 h-4 w-4" />Historial
+                        </button>
+                      )}
+                      {canCreatePayment && (
+                        <button
+                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-gray-50 border border-gray-300 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          title="Registrar pago"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentService(service)
+                            setIsPaymentModalOpen(true)
+                          }}
+                        >
+                          <CreditCardIcon className="-ml-1 mr-1 h-4 w-4" />Pagar
+                        </button>
+                      )}
                     </div>
                   )
                 },
-                {
-                  key: 'actions',
-                  header: 'Acciones',
-                  render: (service: SpecialService) => (
-                    <ActionButtons
-                      onEdit={() => handleOpenModal(service)}
-                      onDelete={() => handleDelete(service.id)}
-                    />
-                  ),
-                },
+                ...((canCreateService || canDeleteService)
+                  ? [
+                    {
+                      key: 'actions',
+                      header: 'Acciones',
+                      render: (item: SpecialService) => (
+                        <ActionButtons
+                          onEdit={() => handleOpenModal(item)}
+                          onDelete={() => handleDelete(item.id)}
+                          editPermission={PERMISSIONS.SPECIAL_SERVICE_EDIT.key}
+                          deletePermission={PERMISSIONS.SPECIAL_SERVICE_DELETE.key}
+                        />
+                      ),
+                    },
+                  ]
+                  : []),
               ]}
               data={services}
               keyExtractor={(service) => service.id}
@@ -324,13 +339,13 @@ function ServiciosEspecialesContent() {
         )}
       </PageLayout>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
         title={currentService ? 'Editar Servicio Especial' : 'Registrar Servicio Especial'}
         footer={modalFooter}
       >
-        <SpecialServiceForm 
+        <SpecialServiceForm
           initialData={currentService || undefined}
           onSubmit={handleSaveService}
           onCancel={handleCloseModal}
@@ -394,6 +409,9 @@ function ServiciosEspecialesContent() {
         onClose={() => setShowActionsModal(false)}
         entity={currentService}
         title={currentService?.client.name || 'Servicio Especial'}
+        viewPermission={PERMISSIONS?.SPECIAL_SERVICE_VIEW.key || 'special_service.view'}
+        editPermission={PERMISSIONS?.SPECIAL_SERVICE_EDIT.key || 'special_service.edit'}
+        deletePermission={PERMISSIONS?.SPECIAL_SERVICE_DELETE.key || 'special_service.delete'}
         fields={[
           {
             key: 'description',
@@ -418,13 +436,12 @@ function ServiciosEspecialesContent() {
             key: 'is_paid',
             label: 'Estado de pago',
             render: (value) => (
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                value 
-                  ? 'bg-green-100 text-green-800' 
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${value
+                  ? 'bg-green-100 text-green-800'
                   : 'bg-yellow-100 text-yellow-800'
-              }`}>
-              {value ? 'Pagado' : 'Pendiente de pago'}
-              </span>                        
+                }`}>
+                {value ? 'Pagado' : 'Pendiente de pago'}
+              </span>
             )
           },
         ]}

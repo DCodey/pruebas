@@ -14,7 +14,107 @@ interface LoginResponse {
   token?: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role:string;
+  password?: string;
+}
+
+export async function addUser(user: Partial<User>): Promise<User> {
+  const token = localStorage.getItem('authToken');
+  const response = await axios.post(`${API_URL}/users`, user, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data.data;
+}
+
+export async function updateUser(user: User): Promise<User> {
+  const token = localStorage.getItem('authToken');
+  const response = await axios.put(`${API_URL}/users/${user.id}`, user, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data.data;
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  const token = localStorage.getItem('authToken');
+  await axios.delete(`${API_URL}/users/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+export const getUsers = async (): Promise<User[]> => {
+  const token = localStorage.getItem('authToken');
+  const response = await axios.get(`${API_URL}/users`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data.data || [];
+}
+
+export const getUserById = async (id: string): Promise<User> => {
+  const token = localStorage.getItem('authToken');
+  const response = await axios.get(`${API_URL}/users/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data.data;
+}
+
 export const userService = {
+  async getUserPermissions(userId: number): Promise<any> {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.get(`${API_URL}/user/${userId}/permissions`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error?.response?.data?.message || 'Error al consultar permisos del usuario',
+        data: null
+      };
+    }
+  },
+
+  async setUserPermissions(userId: number, permissions: string[]): Promise<any> {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.post(`${API_URL}/user/${userId}/permissions`, { permissions }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error?.response?.data?.message || 'Error al actualizar permisos',
+        data: null
+      };
+    }
+  },
+  async getPermissions(): Promise<any> {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.get(`${API_URL}/user/permissions`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error?.response?.data?.message || 'Error al consultar permisos',
+        data: null
+      };
+    }
+  },
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
       const response = await axios.post<LoginResponse>(

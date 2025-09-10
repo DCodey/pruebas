@@ -36,7 +36,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, size =
 
         <div className={`inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:w-full ${sizeClasses[size]}`} onClick={(e) => e.stopPropagation()}>
           <div className="flex flex-col h-full">
-            <div className="relative bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex-grow">
+            <div className="relative bg-white px-4 pt-5 pb-4 sm:p-6 flex-grow">
               <button
                 type="button"
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 focus:outline-none"

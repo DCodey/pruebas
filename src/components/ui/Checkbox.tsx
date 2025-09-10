@@ -47,11 +47,11 @@ const sizeClasses = {
 };
 
 const colorClasses = {
-  primary: 'text-primary-600 focus:ring-primary-500 border-gray-300',
-  success: 'text-green-600 focus:ring-green-500 border-green-300',
-  danger: 'text-red-600 focus:ring-red-500 border-red-300',
-  warning: 'text-yellow-600 focus:ring-yellow-500 border-yellow-300',
-  info: 'text-blue-600 focus:ring-blue-500 border-blue-300',
+  primary: 'text-primary-600 focus:ring-primary-500 border-gray-300 [&:checked]:bg-primary-600 [&:hover]:bg-primary-50 [&:checked:hover]:bg-primary-700 [&:focus]:ring-2 [&:focus]:ring-offset-2',
+  success: 'text-green-600 focus:ring-green-500 border-green-300 [&:checked]:bg-green-600 [&:hover]:bg-green-50 [&:checked:hover]:bg-green-700',
+  danger: 'text-red-600 focus:ring-red-500 border-red-300 [&:checked]:bg-red-600 [&:hover]:bg-red-50 [&:checked:hover]:bg-red-700',
+  warning: 'text-yellow-600 focus:ring-yellow-500 border-yellow-300 [&:checked]:bg-yellow-600 [&:hover]:bg-yellow-50 [&:checked:hover]:bg-yellow-700',
+  info: 'text-blue-600 focus:ring-blue-500 border-blue-300 [&:checked]:bg-blue-600 [&:hover]:bg-blue-50 [&:checked:hover]:bg-blue-700',
 };
 
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>((
@@ -84,9 +84,15 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>((
           id={checkboxId}
           type="checkbox"
           className={cn(
-            'form-checkbox rounded-full transition duration-150 ease-in-out',
-            'focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50',
+            'appearance-none rounded transition duration-150 ease-in-out',
             'disabled:cursor-not-allowed disabled:opacity-60',
+            'border',
+            'focus:outline-none',
+            'cursor-pointer',
+            'flex items-center justify-center',
+            'bg-white',
+            "after:content-[''] after:block after:w-1.5 after:h-2.5 after:border-white after:border-r-2 after:border-b-2 after:rotate-45 after:opacity-0 after:transition-opacity after:duration-150",
+            'checked:after:opacity-100',
             sizeClasses[size],
             colorClasses[color],
             className

@@ -3,7 +3,8 @@ import PageLayout from 'src/components/layout/PageLayout';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import CompanyDataSection from '../../src/components/configuracion/CompanyDataSection';
 import PaymentMethodsSection from '../../src/components/configuracion/PaymentMethodsSection';
-import SystemInfoSection from 'src/components/configuracion/SystemInfoSection';
+import { withPermission } from 'src/hoc/withPermission';
+import { PERMISSIONS } from 'src/utils/permissions';
 
 function ConfigurationContent() {
   const [selected, setSelected] = useState<'company' | 'payment' | 'system'>('company');
@@ -45,10 +46,12 @@ function ConfigurationContent() {
     </PageLayout>
   );
 }
-export default function Configuracion() {
+export function Configuracion() {
   return (
     <DashboardLayout>
       <ConfigurationContent />
     </DashboardLayout>
   );
 }
+export default withPermission(Configuracion, PERMISSIONS.CONFIGURATION_VIEW.key);
+

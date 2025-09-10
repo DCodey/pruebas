@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { withPermission } from 'src/hoc/withPermission';
+import { PERMISSIONS } from 'src/utils/permissions';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
 import { PlusIcon } from '@heroicons/react/24/outline';
@@ -11,6 +13,8 @@ import { Table, TableContainer } from '../../src/components/ui/Table';
 import ConfirmDelete from '../../src/components/ui/ConfirmDelete';
 import { useAlert } from '../../src/contexts/AlertContext';
 import ActionButtons from '../../src/components/ui/ActionButtons';
+import { useHasPermission } from 'src/hoc/useHasPermission';
+import { Button } from 'src/components/ui/Button';
 
 function ClientesContent() {
   const { showError, showSuccess } = useAlert();
@@ -21,6 +25,8 @@ function ClientesContent() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showActionsModal, setShowActionsModal] = useState(false);
+  const canCreateClient = useHasPermission(PERMISSIONS.CLIENT_CREATE.key);
+  const canDeleteClient = useHasPermission(PERMISSIONS.CLIENT_DELETE.key);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -139,15 +145,15 @@ function ClientesContent() {
       <PageLayout
         title="Clientes"
         description="Una lista de todos los clientes frecuentes."
-        headerAction={(
-          <button
-            type="button"
+        headerAction={
+          canCreateClient && (
+          <Button
+            variant="primary"
             onClick={() => handleAddClient()}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
             Registrar Cliente
-          </button>
+          </Button>
         )}
       >
         <TableContainer>
@@ -177,17 +183,21 @@ function ClientesContent() {
                 className: 'text-gray-500',
                 render: (client: Client) => client.document_number || 'Sin documento'
               },
-              {
-                key: 'actions',
-                header: 'Acciones',
-                className: 'text-right',
-                render: (client: Client) => (
+              ...(canDeleteClient ? [
+                {
+                  key: 'actions',
+                  header: 'Acciones',
+                  className: 'text-right',
+                  render: (client: Client) => (
                   <ActionButtons
                     onEdit={() => handleEditClient(client)}
                     onDelete={() => handleDeleteClient(client)}
+                    editPermission={PERMISSIONS.CLIENT_EDIT.key}
+                    deletePermission={PERMISSIONS.CLIENT_DELETE.key}
                   />
                 )
               }
+            ] : []),
             ]}
             data={clients}
             searchable
@@ -207,6 +217,9 @@ function ClientesContent() {
           onClose={() => setShowActionsModal(false)}
           entity={currentClient}
           title={currentClient?.name || 'Cliente'}
+          viewPermission={PERMISSIONS.CLIENT_VIEW.key}
+          editPermission={PERMISSIONS.CLIENT_EDIT.key}
+          deletePermission={PERMISSIONS.CLIENT_DELETE.key}
           fields={[
             {
               key: 'phone',
@@ -252,10 +265,12 @@ function ClientesContent() {
   );
 }
 
-export default function Clientes() {
+const Clientes = () => {
   return (
     <DashboardLayout>
       <ClientesContent />
     </DashboardLayout>
   );
-}
+};
+
+export default withPermission(Clientes, PERMISSIONS.CLIENT_VIEW.key);

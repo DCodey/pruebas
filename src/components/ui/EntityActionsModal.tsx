@@ -1,5 +1,5 @@
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import ActionButtons from './ActionButtons';
+import { usePermissions } from 'src/contexts/PermissionsContext';
 
 export interface EntityField {
     key: string;
@@ -20,6 +20,9 @@ interface EntityActionsModalProps {
     viewLabel?: string;
     editLabel?: string;
     deleteLabel?: string;
+    viewPermission?: string;
+    editPermission?: string;
+    deletePermission?: string;
 }
 
 export default function EntityActionsModal({
@@ -34,8 +37,16 @@ export default function EntityActionsModal({
     viewLabel = 'Ver',
     editLabel = 'Editar',
     deleteLabel = 'Eliminar',
+    viewPermission,
+    editPermission,
+    deletePermission,
 }: EntityActionsModalProps) {
     if (!isOpen || !entity) return null;
+
+    const permissions = usePermissions();
+    const canView = !viewPermission || permissions.includes(viewPermission);
+    const canEdit = !editPermission || permissions.includes(editPermission);
+    const canDelete = !deletePermission || permissions.includes(deletePermission);
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -83,15 +94,15 @@ export default function EntityActionsModal({
                             </div>
 
                             {/* Botones de acción */}
-                            {(onView || onEdit || onDelete) && (
+                            {((onView && canView) || (onEdit && canEdit) || (onDelete && canDelete)) && (
                                 <div className="mt-6 flex justify-between gap-3">
-                                    {onView && (
+                                    {onView && canView && (
                                         <div className="flex-1">
 
                                             <button
                                                 type="button"
                                                 onClick={onView}
-                                                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-green-200 bg-gray-100 px-3 py-2 text-sm font-medium text-primary-600 shadow-sm hover:bg-primary-200 focus:outline-none"
+                                                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-yellow-500 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-600 shadow-sm hover:bg-yellow-100 focus:outline-none"
                                             >
                                                 <span className="h-4 w-4">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
@@ -104,13 +115,13 @@ export default function EntityActionsModal({
 
                                         </div>
                                     )}
-                                    {onEdit && (
+                                    {onEdit && canEdit && (
                                         <div className="flex-1">
 
                                             <button
                                                 type="button"
                                                 onClick={onEdit}
-                                                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-green-200 bg-gray-100 px-3 py-2 text-sm font-medium text-primary-600 shadow-sm hover:bg-primary-200 focus:outline-none"
+                                                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-green-500 bg-gray-100 px-3 py-2 text-sm font-medium text-primary-600 shadow-sm hover:bg-primary-300 focus:outline-none"
                                             >
                                                 <span className="h-4 w-4">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
@@ -122,13 +133,13 @@ export default function EntityActionsModal({
 
                                         </div>
                                     )}
-                                    {onDelete && (
+                                    {onDelete && canDelete && (
                                         <div className="flex-1">
 
                                             <button
                                                 type="button"
                                                 onClick={onDelete}
-                                                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-100 focus:outline-none"
+                                                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-red-500 bg-red-100 px-3 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-300 focus:outline-none"
                                             >
                                                 <span className="h-4 w-4">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">

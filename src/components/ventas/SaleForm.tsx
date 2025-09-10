@@ -33,6 +33,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   const [total, setTotal] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [customProductPriceInput, setCustomProductPriceInput] = useState('0');
   // Cargar clientes y métodos de pago dinámicamente
   useEffect(() => {
     setLoading(true);
@@ -151,6 +152,17 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
     setSaleItems(newItems);
   };
 
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomProductPriceInput(e.target.value);
+    
+    const parsed = parseFloat(e.target.value);
+    if (!isNaN(parsed)) {
+      setCustomProductPrice(parsed);
+    } else {
+      setCustomProductPrice(0);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const client = clientType === 'registered' 
@@ -181,13 +193,13 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-  <SystemLoader />
+        <SystemLoader />
       </div>
     );
   }
 
   return (
-    <form id="sale-form" onSubmit={handleSubmit} className="space-y-6 sm:p-4 max-w-4xl mx-auto">
+    <form id="sale-form" onSubmit={handleSubmit} className="space-y-3 max-w-4xl mx-auto">
       {/* Sección de Cliente */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
@@ -369,8 +381,8 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSubmit, onClose }) => {
                   id="customPrice"
                   name="customPrice"
                   label="Precio (S/)"
-                  value={customProductPrice.toString()}
-                  onChange={e => setCustomProductPrice(parseFloat(e.target.value) || 0)}
+                  value={customProductPriceInput}
+                  onChange={handlePriceChange}
                   min="0"
                   step="0.01"
                 />

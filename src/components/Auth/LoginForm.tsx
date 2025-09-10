@@ -1,8 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { ROUTES } from '../../routes/paths';
+import { PERMISSIONS } from '../../utils/permissions';
+
+// Función para encontrar el primer módulo accesible basado en los permisos
+const getFirstAccessibleRoute = (permissions: string[]): string => {
+  // Orden de prioridad de las rutas
+  const routePriority = [
+    { path: ROUTES.RESUMEN.path, permission: ROUTES.RESUMEN.permission },
+    { path: ROUTES.VENTAS.path, permission: ROUTES.VENTAS.permission },
+    { path: ROUTES.CLIENTES.path, permission: ROUTES.CLIENTES.permission },
+    { path: ROUTES.PRODUCTOS.path, permission: ROUTES.PRODUCTOS.permission },
+    { path: ROUTES.SERVICIOS_ESPECIALES.path, permission: ROUTES.SERVICIOS_ESPECIALES.permission },
+    { path: ROUTES.USUARIOS.path, permission: ROUTES.USUARIOS.permission },
+    { path: ROUTES.ASIGNAR_PERMISOS.path, permission: ROUTES.ASIGNAR_PERMISOS.permission },
+    { path: ROUTES.CONFIGURACION.path, permission: ROUTES.CONFIGURACION.permission },
+  ];
+
+  // Encontrar la primera ruta para la que el usuario tenga permiso
+  const accessibleRoute = routePriority.find(route => 
+    permissions.includes(route.permission)
+  );
+
+  // Si no se encuentra ninguna ruta accesible, redirigir a una ruta por defecto
+  return accessibleRoute?.path || ROUTES.RESUMEN.path;
+};
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -36,7 +60,11 @@ export function LoginForm() {
         }
       }
   
-      navigate(ROUTES.RESUMEN, { replace: true });
+      // Obtener permisos del usuario
+      const userPermissions = JSON.parse(localStorage.getItem('permissions') || '[]');
+      // Redirigir al primer módulo accesible
+      const firstAccessibleRoute = getFirstAccessibleRoute(userPermissions);
+      navigate(firstAccessibleRoute, { replace: true });
   
     } catch (err) {
       setError('Error inesperado');

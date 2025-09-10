@@ -15,6 +15,9 @@ export const COMPANY = {
     logo: 'https://floreriafontana.com/logo.png',
     footer: 'Florería la fontana. Todos los derechos reservados.',
 };
+
+// Los permisos han sido movidos a src/utils/permissions.ts
+
 const recurrenceLabelMap: Record<string, string> = {
   weekly: 'semanal',
   monthly: 'mensual',

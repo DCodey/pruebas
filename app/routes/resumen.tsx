@@ -9,6 +9,8 @@ import { Table, TableContainer } from '../../src/components/ui/Table';
 import MultiSelect, { type MultiSelectOption } from '../../src/components/ui/MultiSelect';
 import { getPaymentMethods } from '../../src/services/PaymentMethodService';
 import SystemLoader from '../../src/components/ui/SystemLoader';
+import { withPermission } from 'src/hoc/withPermission';
+import { PERMISSIONS } from 'src/utils/permissions';
 
 // Helper para fechas
 const getStartOfDay = (date: Date) => new Date(date.setHours(0, 0, 0, 0));
@@ -106,7 +108,7 @@ export function Resumen() {
   };
 
   return (
-    <div className="py-8 md:px-8 px-2">
+    <div className="md:py-8 md:px-8 px-2">
       <div className="flex flex-col md:flex-row mb-8 gap-4 md:gap-0 justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">Resumen</h1>
         <button
@@ -119,7 +121,7 @@ export function Resumen() {
         </button>
       </div>
 
-      <div className="border border-gray-100 grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10 p-3 md:p-6 bg-white rounded-xl shadow-sm align-items-center">
+      <div className="border border-green-200 grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 p-3 md:p-6 bg-white rounded-xl shadow-md align-items-center">
         {/* Filtros rápidos */}
         <div className="flex md:items-center gap-2">
           {['today', 'week', 'month'].map((filter) => (
@@ -178,15 +180,15 @@ export function Resumen() {
 
       {/* Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div className="bg-white p-3 md:p-6 rounded-xl shadow-sm border border-green-100 flex flex-col justify-center">
+        <div className="p-3 md:p-6 rounded-xl shadow-md border border-green-200 flex flex-col justify-center">
           <h3 className="text-sm font-semibold text-green-700 uppercase tracking-wider mb-2">Total de Ventas</h3>
-          <p className="text-3xl font-bold text-green-700 bg-green-50 rounded-lg px-4 py-2 inline-block border border-green-100">
+          <p className="text-2xl font-bold text-green-700 bg-green-50 rounded-lg px-4 py-2 inline-block border border-green-100">
             <span className="">S/</span>{Number(totalSales).toFixed(2)}
           </p>
         </div>
-        <div className="bg-white p-3 md:p-6 rounded-xl shadow-sm border border-green-100 flex flex-col justify-center">
+        <div className="p-3 md:p-6 rounded-xl shadow-md border border-green-200 flex flex-col justify-center">
           <h3 className="text-sm font-semibold text-green-700 uppercase tracking-wider mb-2">Cantidad de Ventas</h3>
-          <p className="text-3xl font-bold text-green-700 bg-green-50 rounded-lg px-4 py-2 inline-block border border-green-100">
+          <p className="text-2xl font-bold text-green-700 bg-green-50 rounded-lg px-4 py-2 inline-block border border-green-100">
             <span className="">{numberOfSales}</span>
           </p>
         </div>
@@ -246,10 +248,12 @@ export function Resumen() {
   );
 }
 
-export default function ResumenPage() {
+export function ResumenPage() {
   return (
     <DashboardLayout>
       <Resumen />
     </DashboardLayout>
   );
 }
+
+export default withPermission(ResumenPage, PERMISSIONS.SALE_VIEW_RESUME.key);

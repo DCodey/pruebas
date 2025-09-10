@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../src/components/layout/DashboardLayout';
 import PageLayout from '../../src/components/layout/PageLayout';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { PERMISSIONS } from 'src/utils/permissions';
 import EditSaleModal from '../../src/components/ventas/EditSaleModal';
 import {
   getSales,
@@ -20,6 +21,9 @@ import { TableContainer, Table } from '../../src/components/ui/Table';
 import SystemLoader from 'src/components/ui/SystemLoader';
 import ActionButtons from 'src/components/ui/ActionButtons';
 import EntityActionsModal from 'src/components/ui/EntityActionsModal';
+import { withPermission } from 'src/hoc/withPermission';
+import { useHasPermission } from 'src/hoc/useHasPermission';
+import { Button } from 'src/components/ui/Button';
 
 function VentasContent() {
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -34,6 +38,10 @@ function VentasContent() {
   const [currentSale, setCurrentSale] = useState<Sale | null>(null);
 
   const { showError, showSuccess } = useAlert();
+  const canViewSale = useHasPermission(PERMISSIONS.SALE_VIEW.key);
+  const canCreateSale = useHasPermission(PERMISSIONS.SALE_CREATE.key);
+  const canEditSale = useHasPermission(PERMISSIONS.SALE_EDIT.key);
+  const canDeleteSale = useHasPermission(PERMISSIONS.SALE_DELETE.key);
 
   const fetchSales = async () => {
     try {
@@ -104,7 +112,7 @@ function VentasContent() {
       setIsLoading(true);
       const saleDetails = await getSaleById(sale.id);
       setSelectedSale(saleDetails);
-      
+
       setIsViewModalOpen(true);
       setShowActionsModal(false);
     } catch (error) {
@@ -115,7 +123,7 @@ function VentasContent() {
     }
   };
 
-  const handleEditUpdated = (sale: Sale ) => {    
+  const handleEditUpdated = (sale: Sale) => {
     setSaleToEdit(sale);
     setCurrentSale(sale);
     setEditModalOpen(true);
@@ -128,16 +136,17 @@ function VentasContent() {
         title="Ventas"
         description="Registro histórico de todas las ventas realizadas."
         headerAction={
-          <div className="flex space-x-3">
-            <button
-              type="button"
-              onClick={handleOpenModal}
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto"
-            >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-              Registrar Venta
-            </button>
-          </div>
+          canCreateSale && (
+            <div className="flex space-x-3">
+              <Button
+                variant="primary"
+                onClick={handleOpenModal}
+              >
+                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                Registrar Venta
+              </Button>
+            </div>
+          )
         }
       >
         <TableContainer>
@@ -191,17 +200,23 @@ function VentasContent() {
                 header: 'Total',
                 render: (sale: Sale) => `S/ ${sale.total}`
               },
-              {
-                key: 'actions',
-                header: 'Acciones',
-                render: (sale: Sale) => (
-                  <ActionButtons
-                    onView={() => handleViewDetails(sale)}
-                    onEdit={() => handleEditUpdated(sale)}
-                    onDelete={() => handleDeleteClick(sale)}
-                  />
-                )
-              }
+
+              ...(canViewSale || canEditSale || canDeleteSale ? [
+                {
+                  key: 'actions',
+                  header: 'Acciones',
+                  className: 'text-right',
+                  render: (sale: Sale) => (
+                    <ActionButtons
+                      onView={() => handleViewDetails(sale)}
+                      onEdit={() => handleEditUpdated(sale)}
+                      onDelete={() => handleDeleteClick(sale)}
+                      editPermission={PERMISSIONS.SALE_EDIT.key}
+                      deletePermission={PERMISSIONS.SALE_DELETE.key}
+                    />
+                  )
+                }
+              ] : [])
             ]}
             data={sales}
             keyExtractor={(sale: Sale) => sale.id.toString()}
@@ -232,7 +247,6 @@ function VentasContent() {
         onClose={() => setIsViewModalOpen(false)}
         sale={selectedSale}
       />
-
       <EditSaleModal
         isOpen={editModalOpen}
         onClose={() => {
@@ -251,21 +265,24 @@ function VentasContent() {
         onClose={() => setShowActionsModal(false)}
         entity={currentSale}
         title={currentSale?.client_name || 'Venta'}
+        viewPermission={PERMISSIONS.SALE_VIEW.key}
+        editPermission={PERMISSIONS.SALE_EDIT.key}
+        deletePermission={PERMISSIONS.SALE_DELETE.key}
         fields={[
           {
-            key: 'client_name',
-            label: 'Cliente',
-            render: (value) => value || 'Sin cliente'
+            key: 'payment_method',
+            label: 'Método de Pago',
+            render: (value) => value?.name || 'Sin método de pago'
           },
           {
-            key: 'document_number',
-            label: 'Documento',
-            render: (value) => value || 'Sin documento'
+            key: 'sale_date',
+            label: 'Fecha de Venta',
+            render: (value) => new Date(value).toLocaleString() || 'Sin fecha de venta'
           },
           {
-            key: 'description',
-            label: 'Notas',
-            render: (value) => value || 'Sin notas',
+            key: 'total',
+            label: 'Total',
+            render: (value: number) => value || 'Sin precio',
             className: 'mt-2'
           }
         ]}
@@ -311,10 +328,13 @@ function VentasContent() {
   );
 }
 
-export default function Ventas() {
+export function Ventas() {
   return (
     <DashboardLayout>
       <VentasContent />
     </DashboardLayout>
   );
 }
+
+export default withPermission(Ventas, PERMISSIONS.SALE_VIEW.key);
+

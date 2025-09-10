@@ -1,4 +1,5 @@
 import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { usePermissions } from 'src/contexts/PermissionsContext';
 
 interface ActionButtonsProps {
   onView?: () => void;
@@ -7,6 +8,8 @@ interface ActionButtonsProps {
   viewLabel?: string;
   editLabel?: string;
   deleteLabel?: string;
+  editPermission?: string;
+  deletePermission?: string;
 }
 
 export default function ActionButtons({
@@ -16,7 +19,14 @@ export default function ActionButtons({
   viewLabel = 'Ver',
   editLabel = 'Editar',
   deleteLabel = 'Eliminar',
+  editPermission,
+  deletePermission,
 }: ActionButtonsProps) {
+  const permissions = usePermissions();
+  
+  // Verificar permisos
+  const canEdit = !editPermission || permissions.includes(editPermission);
+  const canDelete = !deletePermission || permissions.includes(deletePermission);
   // Si no hay ninguna acción, no renderiza nada
   if (!onView && !onEdit && !onDelete) return null;
 
@@ -28,33 +38,33 @@ export default function ActionButtons({
             e.stopPropagation();
             onView();
           }}
-          className="text-primary-600 hover:text-primary-900 border bg-gray-100 border-green-200 rounded-md px-2 py-1 hover:bg-primary-200"
+          className="text-yellow-600 hover:text-yellow-900 border bg-yellow-50 border-yellow-500 rounded-md px-2 py-1 hover:bg-yellow-300"
           title={viewLabel}
         >
           <EyeIcon className="h-5 w-4" />
         </button>
       )}
 
-      {onEdit && (
+      {onEdit && canEdit && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             onEdit();
           }}
-          className="text-primary-600 hover:text-primary-900 border bg-gray-100 border-green-200 rounded-md px-2 py-1 hover:bg-primary-200"
+          className="text-primary-600 hover:text-primary-900 border bg-gray-100 border-green-500 rounded-md px-2 py-1 hover:bg-primary-300"
           title={editLabel}
         >
           <PencilIcon className="h-5 w-4" />
         </button>
       )}
 
-      {onDelete && (
+      {onDelete && canDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
-          className="text-red-600 hover:text-red-900 hover:bg-red-100 border border-red-200 rounded-md px-2 py-1 bg-red-50"
+          className="text-red-600 hover:text-red-900 hover:bg-red-300 border border-red-500 rounded-md px-2 py-1 bg-red-100"
           title={deleteLabel}
         >
           <TrashIcon className="h-5 w-4" />
