@@ -5,7 +5,7 @@
 /node_modules/
 
 # Builds de producción
-/dist/
+
 build/
 
 # Archivos temporales de Vite o React Router
